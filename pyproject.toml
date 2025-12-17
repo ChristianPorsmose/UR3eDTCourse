@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "ur3edtcourse"
+version = "0.1.0"
+description = "This package contains the code for the UR3e Case Study for the 'Engineering Digital Twins' course at Aarhus University."
+authors = ["Andreas Kaag Thomsen <akt@ece.au.dk>"]
+readme = "README.md"
+packages = [
+    { include = "communication" },
+    { include = "startup" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.12"
+numpy = "<2.0"
+roboticstoolbox-python = "==1.1.1"
+spatialmath-python = "==1.1.15"
+pyhocon = ">=0.3.61,<0.4.0"
+pika = ">=1.3.2,<2.0.0"
+requests = "^2.31.0"
+docker = "^7.0.0"
+zmq = "^0.0.0"
+matplotlib = "^3.8.0"
+pandas = "^2.3.3"
+ipykernel = "^7.1.0"
+ipympl = "^0.9.8"
+swift-sim = "^1.1.0"
+websockets = "<11.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
