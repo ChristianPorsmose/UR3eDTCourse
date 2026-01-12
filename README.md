@@ -18,7 +18,7 @@ The repository is organized as follows:
 
 To get started with this case study, please follow these steps strictly in order:
 
-1. **Environment Setup**: Navigate to `0_pre_requisites/` and complete the `0_environment_setup.ipynb` notebook. This ensures you have Python 3.12+, Poetry, Docker, and RabbitMQ installed and configured correctly.
+1. **Environment Setup**: Navigate to `0_pre_requisites/` and complete the `0_environment_setup.ipynb` notebook. This ensures you have Python 3.11, Poetry, Docker, and RabbitMQ installed and configured correctly.
 2. **Running the Mockup**: Follow the instructions in `examples/0_running_the_mockup.ipynb` to spin up the robot simulation.
 3. **Interacting with the Robot**: Proceed through the remaining notebooks in the `examples/` folder to learn how to send control commands and receive state updates.
 
