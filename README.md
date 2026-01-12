@@ -24,14 +24,12 @@ To get started with this case study, please follow these steps strictly in order
 
 ## Dependencies
 
-This project is managed using [Poetry](https://python-poetry.org/). The core dependencies include:
-
-- `roboticstoolbox-python`: For kinematic modeling and spatial math.
-- `pika`: For RabbitMQ communication.
-- `numpy`, `pandas`, `matplotlib`: For data handling and visualization.
-
-To install the dependencies, run the following in the project root:
+This project is managed using [Poetry](https://python-poetry.org/). To install the dependencies, run the following in the project root, preferably in a virtual environment:
 
 ```bash
 poetry install
 ```
+
+## Contributing
+
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
