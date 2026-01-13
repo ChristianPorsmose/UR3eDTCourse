@@ -33,7 +33,7 @@ def _get_executable_path():
         executable_path = os.path.join(ur3e_mockup_dir, executable_name)
     elif system == "Linux":
         # Linux
-        executable_name = "ur3e_mockup_linux"
+        executable_name = "ur3e_mockup_x86_64"
         executable_path = os.path.join(ur3e_mockup_dir, executable_name)
 
     else:
