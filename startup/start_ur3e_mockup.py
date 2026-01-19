@@ -5,6 +5,16 @@ This module starts the executable in '../ur3e_mockup/' folder named 'ur3e_mockup
 import subprocess
 import os
 import platform
+import logging
+from startup.utils.logging_config import config_logging
+
+# Configure logging
+log_dir = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, "ur3e_mockup.log")
+config_logging(filename=log_file, level=logging.INFO)
+
+logger = logging.getLogger("start_ur3e_mockup")
 
 
 def _get_executable_path(system, machine):
@@ -55,9 +65,9 @@ def start_robot_arm_mockup(ok_queue=None):
     # Get the platform-specific executable path
     system = platform.system()
     machine = platform.machine()
-    print(f"Detected OS: {system}, Machine: {machine}")
+    logger.info("Detected OS: %s, Machine: %s", system, machine)
     executable_path = _get_executable_path(system, machine)
-    print(f"Starting executable: {executable_path}")
+    logger.info("Starting executable: %s", executable_path)
 
     # Start the subprocess
     process = subprocess.Popen([executable_path])
@@ -70,7 +80,7 @@ def start_robot_arm_mockup(ok_queue=None):
         process.wait()
     except KeyboardInterrupt:
         # Handle Ctrl+C gracefully
-        print("\nShutting down robot arm mockup...")
+        logger.info("Shutting down robot arm mockup...")
         process.terminate()
         try:
             process.wait(timeout=5)
@@ -78,7 +88,7 @@ def start_robot_arm_mockup(ok_queue=None):
             process.kill()
             process.wait()
     finally:
-        print("Robot arm mockup stopped.")
+        logger.info("Robot arm mockup stopped.")
 
 
 if __name__ == "__main__":
