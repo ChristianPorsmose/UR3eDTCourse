@@ -44,16 +44,25 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-  data_recorder:
-    container_name: data_recorder
+  # data_recorder:
+  #   container_name: data_recorder
+  #   build: 
+  #     context: .
+  #     dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+  #   volumes:
+  #     - ./communication/connect.yml:/app/connect.yml:rw
+  #     - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
+  #   depends_on:
+  #     - influxdb
+  #     - mockup
+  abnormal_movement:
+    container_name: abnormal_movement
     build: 
       context: .
-      dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+      dockerfile: DTsolution/DTservices/abnormal_movement/Dockerfile
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
     depends_on:
-      - influxdb
       - mockup
   # rt_robot_prediction:
   #   container_name: robot_prediction

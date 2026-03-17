@@ -5,7 +5,8 @@ ENCODING = "ascii"
 ### ROUTING KEYS
 ROUTING_KEY_STATE = "robotarm.pt.state"
 ROUTING_KEY_CTRL = "robotarm.ctrl"
-
+ROUTING_KEY_KINEMATIC = "kinematic.state"
+ROUTING_KEY_DEVIATION = "deviation.status"
 
 ### MESSAGES
 class CtrlMsgFields:
@@ -33,14 +34,12 @@ class CtrlMsgKeys:
 
 class FaultTypes:
     """Types of faults that can be injected into the robot arm."""
-
     STUCK_JOINT = "stuck_joint"
     WEAR = "wear"
 
 
 class RobotArmStateKeys:
     """Keys used in state messages sent from the robot arm."""
-
     ROBOT_MODE = "robot_mode"
     Q_ACTUAL = "q_actual"
     QD_ACTUAL = "qd_actual"
@@ -50,13 +49,15 @@ class RobotArmStateKeys:
     JOINT_MAX_ACCELERATION = "joint_max_acceleration"
     TCP_POSE = "tcp_pose"
 
-
 class RobotMode:
     """Possible modes of the robot arm (ROBOT_MODE)."""
-
     ROBOT_MODE_RUNNING = "Running"
     ROBOT_MODE_IDLE = "Idle"
 
+class Deviation:
+    """position deviations"""
+    TIMESTAMP = "timestamp"
+    DEVIATIONS = "deviations"
 
 def encode_json(object):
     return json.dumps(object).encode(ENCODING)
