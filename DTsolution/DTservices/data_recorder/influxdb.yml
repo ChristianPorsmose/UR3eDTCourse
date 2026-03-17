@@ -1,4 +1,4 @@
 url: "http://influxdb:8086"
-token: "mZctPtTspz5GdaNkUyhRgv1TOIn6x9_pA1qtN8DAyb3EDflfo5M4KSsRlGFoLWasJQJklOZ15dU_uNKjBMfXkw=="
+token: "SECRET_AF"
 org: "ur3e"
 bucket: "ur3e"
