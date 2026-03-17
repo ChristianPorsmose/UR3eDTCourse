@@ -43,8 +43,8 @@ def safe_write(writer: WriterFn, point: Point, success_msg: str):
 def write_datapoint_to_influxdb(writer: WriterFn, dp: dict):
     dp_flat = {
         "robot_mode": dp["robot_mode"],
-        "joint_max_speed": dp["joint_max_speed"],
-        "joint_max_acceleration": dp["joint_max_acceleration"],
+        "joint_max_speed": float(dp["joint_max_speed"]),
+        "joint_max_acceleration": float(dp["joint_max_acceleration"]),
         "timestamp": dp["timestamp"]
     }
 
@@ -91,7 +91,7 @@ def main():
         }
 
         for routing_key, func in subscriptions.items():
-            rabbit_mq.subscribe(routing_key, lambda *_, body_json, f=func: f(writer, body_json))
+            rabbit_mq.subscribe(routing_key, lambda ch, method, properties, body_json, f=func: f(writer, body_json))
 
         rabbit_mq.start_consuming()
 

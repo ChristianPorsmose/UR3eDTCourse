@@ -6,24 +6,13 @@ services:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ur3e
       DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
-      DOCKER_INFLUXDB_INIT_ORG: myorg
-      DOCKER_INFLUXDB_INIT_BUCKET: mybucket
+      DOCKER_INFLUXDB_INIT_ORG: ur3e
+      DOCKER_INFLUXDB_INIT_BUCKET: ur3e
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
     volumes:
       - db-data:/var/lib/influxdb:rw
     ports:
       - 8086:8086
-  grafana:
-    image: grafana/grafana:10.3.3
-    container_name: grafana
-    depends_on:
-      - influxdb
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-    volumes:
-      - grafana-data:/var/lib/grafana
   rabbitmq:
     container_name: rabbitmq-server
     image: rabbitmq:3.12-management
@@ -53,22 +42,28 @@ services:
       - ./startup/startup.conf:/app/startup.conf:z
     restart: unless-stopped
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
   data_recorder:
     container_name: data_recorder
     build: 
       context: .
       dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
     depends_on:
       - influxdb
       - mockup
-  rt_robot_prediction:
-    container_name: robot_prediction
-    build: 
-      context: .
-      dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
-    depends_on:
-      - mockup
+  # rt_robot_prediction:
+  #   container_name: robot_prediction
+  #   build: 
+  #     context: .
+  #     dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
+  #   volumes:
+  #     - ./communication/connect.yml:/app/connect.yml:rw
+  #   depends_on:
+  #     - mockup
 
 networks:
   shared-communication:

@@ -1,3 +1,4 @@
-url: "http://influxdb-server:8086"
-token: "token"
+url: "http://influxdb:8086"
+token: "SECRET_AF"
 org: "ur3e"
+bucket: "ur3e"
