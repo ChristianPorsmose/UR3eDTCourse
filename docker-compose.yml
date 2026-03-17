@@ -59,6 +59,9 @@ services:
     build: 
       context: .
       dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
     depends_on:
       - influxdb
       - mockup
@@ -67,6 +70,8 @@ services:
     build: 
       context: .
       dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
     depends_on:
       - mockup
 

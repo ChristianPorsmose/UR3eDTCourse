@@ -11,7 +11,6 @@ COPY startup/ startup/
 COPY communication/__init__.py communication/
 COPY communication/rabbitmq.py communication/
 COPY communication/protocol.py communication/
-COPY communication/connect.yml .
 RUN touch README.md
 
 RUN poetry install

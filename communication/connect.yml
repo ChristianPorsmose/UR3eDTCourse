@@ -1,4 +1,4 @@
-"ip": "localhost"
+"ip": "rabbitmq"
 "port": 5672
 "username": "ur3e"
 "password": "ur3e"
