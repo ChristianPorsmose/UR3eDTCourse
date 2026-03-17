@@ -67,7 +67,8 @@ services:
     build: 
       context: .
       dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
-    
+    depends_on:
+      - mockup
 
 networks:
   shared-communication:
