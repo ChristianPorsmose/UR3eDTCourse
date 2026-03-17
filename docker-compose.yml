@@ -59,6 +59,9 @@ services:
     build: 
       context: .
       dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+    depends_on:
+      - influxdb
+      - mockup
   rt_robot_prediction:
     container_name: robot_prediction
     build: 
