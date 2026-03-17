@@ -25,15 +25,13 @@ def inject_ctrl_msg_to_influxdb(writer, body):
     point = point.field("joint_positions", str(body.get("joint_positions", [])))
 
         
-def run_simulation(model : KinematicModel, dt=0.10):
-    with model_lock:
-        i = 0
-        while True:
-            current_time = i * dt
-            model.fmi2DoStep(current_time, dt)
-            #time.sleep(dt)
-            i += 1
-    model.fmi2DoStep(current_time, dt)
+def run_simulation(model : KinematicModel,rabbit_mq: Rabbitmq, dt=0.10):
+    i= 0
+    while True:
+        start_time = time.time()
+        with model_lock:
+                current_time = i * dt
+                model.fmi2DoStep(current_time, dt)
 
     current_state = {
         "timestamp": time.time(),
@@ -43,7 +41,12 @@ def run_simulation(model : KinematicModel, dt=0.10):
         "source" : "rt_robot_prediction_service"
     }
 
-    Rabbit_mq.publish(protocol.ROUTING_KEY_STATE, current_state)
+    rabbit_mq.publish(protocol.ROUTING_KEY_STATE, current_state)
+
+    elapsed_time = time.time() - start_time
+    sleep_time = max(0, dt - elapsed_time)
+    time.sleep(sleep_time)
+    i += 1
 
 def main():
     config = load_config(Path("connect.yml"))
@@ -57,7 +60,7 @@ def main():
         rmq_thread = threading.Thread(target=rabbit_mq.start_consuming, daemon=True)
         rmq_thread.start()
 
-        run_simulation(model)
+        run_simulation(model, rabbit_mq)
 
 if __name__ == "__main__":
     main()
