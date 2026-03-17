@@ -53,7 +53,8 @@ services:
       - ./startup/startup.conf:/app/startup.conf:z
     restart: unless-stopped
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
   data_recorder:
     container_name: data_recorder
     build: 
@@ -65,15 +66,15 @@ services:
     depends_on:
       - influxdb
       - mockup
-  rt_robot_prediction:
-    container_name: robot_prediction
-    build: 
-      context: .
-      dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
-    volumes:
-      - ./communication/connect.yml:/app/connect.yml:rw
-    depends_on:
-      - mockup
+  # rt_robot_prediction:
+  #   container_name: robot_prediction
+  #   build: 
+  #     context: .
+  #     dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
+  #   volumes:
+  #     - ./communication/connect.yml:/app/connect.yml:rw
+  #   depends_on:
+  #     - mockup
 
 networks:
   shared-communication:
