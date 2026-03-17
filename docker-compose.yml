@@ -12,8 +12,6 @@ services:
       - db-data:/var/lib/influxdb:rw
     ports:
       - 8086:8086
-    networks:
-      - shared-communication
   grafana:
     image: grafana/grafana:10.3.3
     container_name: grafana
@@ -37,8 +35,6 @@ services:
       - 5672:5672
       - 15672:15672
       - 1883:1883
-    networks:
-      - shared-communication
     command: >
       sh -c "rabbitmq-plugins enable --offline rabbitmq_mqtt rabbitmq_federation_management rabbitmq_stomp &&
             docker-entrypoint.sh rabbitmq-server"
@@ -55,8 +51,6 @@ services:
       dockerfile: ${DOCKERFILE:-Dockerfile.x86}
     volumes:
       - ./startup/startup.conf:/app/startup.conf:z
-    networks:
-      - shared-communication
     restart: unless-stopped
     depends_on:
       - rabbitmq
@@ -71,8 +65,6 @@ services:
       context: .
       dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
     
-
-
 
 networks:
   shared-communication:

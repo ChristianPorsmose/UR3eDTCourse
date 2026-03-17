@@ -79,7 +79,7 @@ def write_ctrl_msg_to_influxdb(writer: WriterFn, ctrl_msg: dict):
 
 def main():
     connect_config = load_config(Path("connect.yml"))
-    influx_config = load_config(Path("influx.yml"))
+    influx_config = load_config(Path("influxdb.yml"))
 
     with Rabbitmq(**connect_config) as rabbit_mq, InfluxDBClient(**influx_config) as client:
         write_api: WriteApi = client.write_api(write_options=SYNCHRONOUS)

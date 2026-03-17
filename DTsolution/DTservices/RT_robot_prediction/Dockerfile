@@ -11,14 +11,13 @@ COPY startup/ startup/
 COPY communication/__init__.py communication/
 COPY communication/rabbitmq.py communication/
 COPY communication/protocol.py communication/
-COPY communication/utils communication/
 COPY communication/connect.yml .
 RUN touch README.md
 
 RUN poetry install
 
 COPY DTsolution/models DTsolution/models
-COPY DTsolution/utils DTsolution/utils
+COPY DTsolution/DTservices/utils utils
 COPY DTsolution/DTservices/RT_robot_prediction .
 
 

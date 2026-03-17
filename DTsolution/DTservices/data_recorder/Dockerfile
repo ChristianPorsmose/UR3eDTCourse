@@ -10,7 +10,7 @@ COPY communication/protocol.py communication/
 COPY communication/connect.yml .
 
 
-COPY DTsolution/utils DTsolution/utils
+COPY DTsolution/DTservices/utils utils
 COPY DTsolution/DTservices/data_recorder/data_recorder.py .
 COPY DTsolution/DTservices/data_recorder/influxdb.yml .
 
