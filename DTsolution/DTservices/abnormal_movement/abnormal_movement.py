@@ -16,17 +16,6 @@ latest_mock_queue = queue.Queue(maxsize=1)
 kinematic_queue = deque(maxlen=20) # might need to be longer for accuraacy
 publish_queue = queue.Queue()
 
-mock_event = threading.Event()
-publish_event = threading.Event()
-
-
-def consume_mock_output(msg: dict):
-    latest_mock_queue.put(msg)
-    mock_event.set()
-
-def consume_kinematic_output(msg: dict):
-    kinematic_queue.append(msg)
-
 def interpolate(target_time, data):
     if len(data) < 2:
         return None
@@ -40,9 +29,7 @@ def interpolate(target_time, data):
 
 def deviation_loop():
     while True:
-        mock_event.wait()
-        latest_mock = latest_mock_queue.get(msg)
-        mock_event.set()
+        latest_mock = latest_mock_queue.get()
         mock_time = latest_mock[rb.TIMESTAMP]
         kin_value = interpolate(mock_time, list(kinematic_queue))
         if kin_value is None:
@@ -53,23 +40,17 @@ def deviation_loop():
             d.DEVIATIONS: deviation.tolist()
         }
         publish_queue.put(msg)
-        publish_event.set()
 
-        mock_event.clear()
 
 def publisher_loop(rabbit_mq: Rabbitmq):
-    publish = partial(rabbit_mq.send_message,routing_key=ROUTING_KEY_DEVIATION )
+    publish = partial(rabbit_mq.send_message, routing_key=ROUTING_KEY_DEVIATION)
+
     while True:
-        publish_event.wait()
+        msg = publish_queue.get()  
 
-        while publish_queue:
-            msg = publish_queue.get()
-
-            rabbit_mq.connection.add_callback_threadsafe(
-                lambda m=msg: publish(message=m)
-            )
-
-        publish_event.clear()
+        rabbit_mq.connection.add_callback_threadsafe(
+            lambda m=msg: publish(message=m)
+        )
 
 def main():
     config = load_config(Path("connect.yml"))
@@ -77,14 +58,14 @@ def main():
     with Rabbitmq(**config) as rabbit_mq:
 
         subscriptions = {
-            ROUTING_KEY_STATE: consume_mock_output,
-            ROUTING_KEY_KINEMATIC: consume_kinematic_output,
+            ROUTING_KEY_STATE: lambda x : latest_mock_queue.put(x),
+            ROUTING_KEY_KINEMATIC: lambda x : kinematic_queue.append(x) ,
         }
 
         for key, func in subscriptions.items():
             rabbit_mq.subscribe(
                 key,
-                lambda ch, method, props, body, f=func: f(body)
+                lambda _, __, ___, body, f=func: f(body)
             )
 
         threading.Thread(target=deviation_loop, daemon=True).start()

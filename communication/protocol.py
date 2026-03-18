@@ -7,6 +7,7 @@ ROUTING_KEY_STATE = "robotarm.pt.state"
 ROUTING_KEY_CTRL = "robotarm.ctrl"
 ROUTING_KEY_KINEMATIC = "kinematic.state"
 ROUTING_KEY_DEVIATION = "deviation.status"
+ROUTING_KEY_STUCK_JOINT = "stuck_joint.status"
 
 ### MESSAGES
 class CtrlMsgFields:
@@ -57,7 +58,12 @@ class RobotMode:
 class Deviation:
     """position deviations"""
     TIMESTAMP = "timestamp"
-    DEVIATIONS = "deviations"
+    DEVIATIONS = "deviations" # list of deviations
+
+class StuckJoint:
+    """is a joint stuck, """
+    TIMESTAMP = "timestamp"
+    STUCK_JOINTS = "stuck_joint" # list of stuck joint, if true the joint is stuck
 
 def encode_json(object):
     return json.dumps(object).encode(ENCODING)
