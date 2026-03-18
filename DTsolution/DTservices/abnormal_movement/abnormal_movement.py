@@ -58,14 +58,15 @@ def main():
     with Rabbitmq(**config) as rabbit_mq:
 
         subscriptions = {
-            ROUTING_KEY_STATE: lambda x : latest_mock_queue.put(x),
-            ROUTING_KEY_KINEMATIC: lambda x : kinematic_queue.append(x) ,
+            (ROUTING_KEY_STATE, "abnormal_queue_1"): lambda x: latest_mock_queue.put(x),
+            (ROUTING_KEY_KINEMATIC, "abnormal_queue_2"): lambda x: kinematic_queue.append(x),
         }
 
-        for key, func in subscriptions.items():
+        for (key, queue_name), func in subscriptions.items():
             rabbit_mq.subscribe(
                 key,
-                lambda _, __, ___, body, f=func: f(body)
+                lambda _,__,___, body, f=func: f(body),
+                queue_name
             )
 
         threading.Thread(target=deviation_loop, daemon=True).start()

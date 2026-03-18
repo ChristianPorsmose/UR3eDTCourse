@@ -65,9 +65,9 @@ def main():
 
         rabbit_mq.subscribe(
                 ROUTING_KEY_STATE,
-                lambda _, __, ___, body, : consumer_queue.put(body)
+                lambda _, __, ___, body, : consumer_queue.put(body),
+                queue_name="stuck_joint"
             )
-
         threading.Thread(target=lambda: publisher_loop(rabbit_mq), daemon=True).start()
 
         rabbit_mq.start_consuming()
