@@ -64,6 +64,15 @@ services:
       - ./communication/connect.yml:/app/connect.yml:rw
     depends_on:
       - mockup
+  stuck_joint:
+    container_name: stuck_joint
+    build: 
+      context: .
+      dockerfile: DTsolution/DTservices/stuck_joint_detection/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+    depends_on:
+      - mockup
   # rt_robot_prediction:
   #   container_name: robot_prediction
   #   build: 
