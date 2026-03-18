@@ -11,7 +11,7 @@ from utils.utils import load_config
 from communication.rabbitmq import Rabbitmq
 import queue
 
-consumer_queue = queue.Queue(maxlen=50)
+consumer_queue = queue.Queue()
 
 kinematic_queue = deque(maxlen=20)
 publish_queue = queue.Queue()
