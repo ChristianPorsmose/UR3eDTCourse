@@ -1,13 +1,12 @@
 from collections import deque
-from functools import partial
 import threading
 import numpy as np
 from pathlib import Path
 
 from communication.protocol import RobotArmStateKeys as rb
 from communication.protocol import StuckJoint as s
-from communication.protocol import ROUTING_KEY_STATE, ROUTING_KEY_STUCK_JOINT, ROUTING_KEY_CTRL
-from utils.utils import load_config
+from communication.protocol import ROUTING_KEY_STUCK_JOINT, ROUTING_KEY_CTRL
+from utils.utils import load_config, publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
 
@@ -16,18 +15,6 @@ consumer_queue = queue.Queue()
 kinematic_queue = deque(maxlen=20)
 publish_queue = queue.Queue()
 
-def consume_mock_output(msg: dict):
-    consumer_queue.put(msg)
-
-def publisher_loop(rabbit_mq: Rabbitmq):
-    publish = partial(rabbit_mq.send_message, routing_key=ROUTING_KEY_STUCK_JOINT)
-
-    while True:
-        msg = publish_queue.get()
-
-        rabbit_mq.connection.add_callback_threadsafe(
-            lambda m=msg: publish(message=m)
-        )
 
 def is_constant(values: np.ndarray, eps: float) -> np.ndarray:
     return (np.max(values, axis=0) - np.min(values, axis=0)) < eps
@@ -68,7 +55,7 @@ def main():
                 lambda _, __, ___, body, : consumer_queue.put(body),
                 queue_name="stuck_joint"
             )
-        threading.Thread(target=lambda: publisher_loop(rabbit_mq), daemon=True).start()
+        threading.Thread(target=lambda: publisher_loop(rabbit_mq, ROUTING_KEY_STUCK_JOINT, publish_queue), daemon=True).start()
 
         rabbit_mq.start_consuming()
 

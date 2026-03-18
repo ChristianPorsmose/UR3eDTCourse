@@ -8,7 +8,7 @@ from pathlib import Path
 from communication.protocol import RobotArmStateKeys as rb
 from communication.protocol import Deviation as d
 from communication.protocol import ROUTING_KEY_DEVIATION, ROUTING_KEY_STATE, ROUTING_KEY_KINEMATIC
-from utils.utils import load_config
+from utils.utils import load_config, publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
 
@@ -42,16 +42,6 @@ def deviation_loop():
         publish_queue.put(msg)
 
 
-def publisher_loop(rabbit_mq: Rabbitmq):
-    publish = partial(rabbit_mq.send_message, routing_key=ROUTING_KEY_DEVIATION)
-
-    while True:
-        msg = publish_queue.get()  
-
-        rabbit_mq.connection.add_callback_threadsafe(
-            lambda m=msg: publish(message=m)
-        )
-
 def main():
     config = load_config(Path("connect.yml"))
     print("STARTING ABNORMAL MOVEMENT")
@@ -70,7 +60,7 @@ def main():
             )
 
         threading.Thread(target=deviation_loop, daemon=True).start()
-        threading.Thread(target=lambda: publisher_loop(rabbit_mq), daemon=True).start()
+        threading.Thread(target=lambda: publisher_loop(rabbit_mq, ROUTING_KEY_DEVIATION, publish_queue), daemon=True).start()
 
         rabbit_mq.start_consuming()
 
