@@ -9,7 +9,7 @@ COPY communication/rabbitmq.py communication/
 COPY communication/protocol.py communication/
 
 
-COPY DTsolution/DTservices/utils utils
+COPY DTsolution/utils utils
 COPY DTsolution/DTservices/data_recorder/data_recorder.py .
 
 CMD ["python","-u", "data_recorder.py"]

@@ -54,7 +54,7 @@ def publisher_loop(rabbit_mq: Rabbitmq):
 
 def main():
     config = load_config(Path("connect.yml"))
-
+    print("STARTING ABNORMAL MOVEMENT")
     with Rabbitmq(**config) as rabbit_mq:
 
         subscriptions = {

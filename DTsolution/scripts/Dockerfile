@@ -9,6 +9,6 @@ COPY communication/rabbitmq.py communication/
 COPY communication/protocol.py communication/
 
 COPY DTsolution/utils utils
-COPY DTsolution/DTservices/stuck_joint_detection/stuck_joint.py .
+COPY DTsolution/scripts/self_cleaning_move_generator.py .
 
-CMD ["python","-u", "stuck_joint.py"]
+CMD ["python","-u", "self_cleaning_move_generator.py"]

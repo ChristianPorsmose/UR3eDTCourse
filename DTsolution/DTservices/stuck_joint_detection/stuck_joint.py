@@ -6,7 +6,7 @@ from pathlib import Path
 
 from communication.protocol import RobotArmStateKeys as rb
 from communication.protocol import StuckJoint as s
-from communication.protocol import ROUTING_KEY_STATE, ROUTING_KEY_STUCK_JOINT
+from communication.protocol import ROUTING_KEY_STATE, ROUTING_KEY_STUCK_JOINT, ROUTING_KEY_CTRL
 from utils.utils import load_config
 from communication.rabbitmq import Rabbitmq
 import queue
@@ -62,9 +62,9 @@ def main():
     config = load_config(Path("connect.yml"))
 
     with Rabbitmq(**config) as rabbit_mq:
-
+        print("STARTING STUCK JOINT DETECTION")
         rabbit_mq.subscribe(
-                ROUTING_KEY_STATE,
+                ROUTING_KEY_CTRL,
                 lambda _, __, ___, body, : consumer_queue.put(body),
                 queue_name="stuck_joint"
             )
