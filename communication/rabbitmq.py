@@ -79,10 +79,14 @@ class Rabbitmq:
         else:
             return None
 
-    def declare_local_queue(self, routing_key):
+    def declare_local_queue(self, routing_key, queue_name=None, exclusive=False):
         # Creates a local queue.
         # Rabbitmq server will clean it if the connection drops.
-        result = self.channel.queue_declare(queue="", exclusive=True, auto_delete=True)
+        result = self.channel.queue_declare(
+            queue=queue_name or "",
+            exclusive=exclusive,
+            auto_delete=(queue_name is None)
+        )
         created_queue_name = result.method.queue
         self.channel.queue_bind(
             exchange=self.exchange_name,
@@ -108,8 +112,12 @@ class Rabbitmq:
         self._l.debug("Closing connection in rabbitmq")
         self.connection.close()
 
-    def subscribe(self, routing_key, on_message_callback):
-        created_queue_name = self.declare_local_queue(routing_key=routing_key)
+    def subscribe(self, routing_key, on_message_callback, queue_name = ""):
+        created_queue_name = self.declare_local_queue(
+            routing_key=routing_key,
+            queue_name=queue_name,
+            exclusive=(queue_name is None) 
+        )
 
         # Register an intermediate function to decode the msg.
         def decode_msg(ch, method, properties, body):

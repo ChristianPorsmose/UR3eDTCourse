@@ -16,15 +16,34 @@ def inject_ctrl_msg_to_model(model : KinematicModel, body : dict):
         elif body["type"] == "play":
             model.fmi2StartMovement()
     
+def inject_ctrl_msg_to_influxdb(writer, body):
+    if body["type"] not in ["load_program", "play"]:
+        return
+    
+    point = point("control_messages").time(time.time_ns()).tag("source", "rt_robot_prediction_service")
+    point = point.field("message_type", body["type"])
+    point = point.field("joint_positions", str(body.get("joint_positions", [])))
 
+        
 def run_simulation(model : KinematicModel, dt=0.10):
     with model_lock:
         i = 0
         while True:
             current_time = i * dt
             model.fmi2DoStep(current_time, dt)
-            time.sleep(dt)
+            #time.sleep(dt)
             i += 1
+    model.fmi2DoStep(current_time, dt)
+
+    current_state = {
+        "timestamp": time.time(),
+        "simulation_time": current_time,
+        "joint_positions": model.fmi2GetJointPositions(),
+        "joint_velocities": model.fmi2GetJointVelocities(),
+        "source" : "rt_robot_prediction_service"
+    }
+
+    Rabbit_mq.publish(protocol.ROUTING_KEY_STATE, current_state)
 
 def main():
     config = load_config(Path("connect.yml"))
