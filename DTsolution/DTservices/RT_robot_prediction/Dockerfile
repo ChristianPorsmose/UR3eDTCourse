@@ -16,7 +16,7 @@ RUN touch README.md
 RUN poetry install
 
 COPY DTsolution/models DTsolution/models
-COPY DTsolution/DTservices/utils utils
+COPY DTsolution/utils utils
 COPY DTsolution/DTservices/RT_robot_prediction .
 
 
