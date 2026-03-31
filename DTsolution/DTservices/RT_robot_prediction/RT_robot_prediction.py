@@ -1,5 +1,6 @@
 from pathlib import Path
 import time
+from xml.parsers.expat import model
 
 from utils.utils import load_config
 from communication import protocol
@@ -25,42 +26,75 @@ def inject_ctrl_msg_to_influxdb(writer, body):
     point = point.field("joint_positions", str(body.get("joint_positions", [])))
 
         
-def run_simulation(model : KinematicModel,rabbit_mq: Rabbitmq, dt=0.10):
-    i= 0
+def run_simulation(model : KinematicModel, rabbit_mq: Rabbitmq, dt=0.05):
+    i = 0
     while True:
         start_time = time.time()
-        with model_lock:
-                current_time = i * dt
-                model.fmi2DoStep(current_time, dt)
+        
+        with model_lock: # Keep EVERYTHING model-related inside the lock
+            current_time = i * dt
+            model.fmi2DoStep(current_time, dt)
 
-    current_state = {
-        "timestamp": time.time(),
-        "simulation_time": current_time,
-        "joint_positions": model.fmi2GetJointPositions(),
-        "joint_velocities": model.fmi2GetJointVelocities(),
-        "source" : "rt_robot_prediction_service"
-    }
+            pos = [float(x) for x in model.fmi2GetJointPositions()]
+            vel = [float(x) for x in model.fmi2GetJointVelocities()]
 
-    rabbit_mq.publish(protocol.ROUTING_KEY_STATE, current_state)
+            # Define the state while we have the lock
+            current_state = {
+                "q_actual": pos,
+                "qd_actual": vel,
+                "q_target": pos,  # Assuming target positions are the same as actual positions for now
+                "timestamp": float(time.time()),
+                "robot_mode": "RUNNING" if model.moving else "IDLE",
+                "source": "rt robot prediction service",
+                "joint_max_speed": 3.14,
+                "joint_max_acceleration": 5.0,
+                "tcp_pose": [0.0] * 6,
+                "simulation_time": float(current_time),
+                # Duplicates for your own use
+                #"joint_positions": model.fmi2GetJointPositions(),
+                #"joint_velocities": model.fmi2GetJointVelocities(),
+            }
 
-    elapsed_time = time.time() - start_time
-    sleep_time = max(0, dt - elapsed_time)
-    time.sleep(sleep_time)
-    i += 1
+        # Publish outside the lock so we don't hold up the listener thread
+        rabbit_mq.send_message(protocol.ROUTING_KEY_STATE, current_state)
 
+        elapsed_time = time.time() - start_time
+        time.sleep(max(0, dt - elapsed_time))
+        i += 1
+ 
 def main():
     config = load_config(Path("connect.yml"))
 
-    with Rabbitmq(**config) as rabbit_mq:
-        model = KinematicModel(movement_fidelity=1000)
+    # Connection 1: For the Background Listener
+    rabbit_mq_listener = Rabbitmq(**config)
+    rabbit_mq_listener.connect_to_server()
+    
+    # Connection 2: For the Simulation Loop
+    rabbit_mq_publisher = Rabbitmq(**config)
+    rabbit_mq_publisher.connect_to_server()
 
-        rabbit_mq.subscribe(protocol.ROUTING_KEY_CTRL, lambda *_, body_json :
-                            inject_ctrl_msg_to_model(model, body_json))
-        
-        rmq_thread = threading.Thread(target=rabbit_mq.start_consuming, daemon=True)
-        rmq_thread.start()
+    model = KinematicModel(movement_fidelity=1000)
 
-        run_simulation(model, rabbit_mq)
+    # Subscribe using the listener connection
+    rabbit_mq_listener.subscribe(protocol.ROUTING_KEY_CTRL, 
+                             lambda ch, method, properties, body_json: inject_ctrl_msg_to_model(model, body_json))
+    
+    # Start the listener thread
+    rmq_thread = threading.Thread(target=rabbit_mq_listener.start_consuming, daemon=True)
+    rmq_thread.start()
+
+    # Start the simulation using the publisher connection
+    try:
+        run_simulation(model, rabbit_mq_publisher)
+    finally:
+        rabbit_mq_listener.close()
+        rabbit_mq_publisher.close()
 
 if __name__ == "__main__":
     main()
+
+#this service should 
+#consume control messages in mockup from rabbit mq, 
+#inject into kinematic model, 
+#publish kinematic model control messages to rabbitmq
+#loop simulation at 20 hz

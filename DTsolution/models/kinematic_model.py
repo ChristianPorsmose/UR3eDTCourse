@@ -63,15 +63,31 @@ class KinematicModel:
         self.time = current_time + step_size
 
         if self.moving:
+            # Check if we have surpassed the total duration
             if self.time > self.current_movement_start_time + self.current_movement_duration:
                 self.current_joint_angles = self.commanded_joint_angles
+                self.moving = False # It's usually better to stop moving once reached
             else:
-                # Determine how many seconds of movement is done
-                traj_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity) # index of trajectory
-                traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity) # Determine trajectory of movement
+                # Calculate index and CLAMP it to the max allowed (fidelity - 1)
+                raw_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity)
+                traj_index = min(max(0, raw_index), self.movement_fidelity - 1)
+                
+                traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity)
                 self.current_joint_angles = traj.q[traj_index, :].tolist()
-                self.moving = False
 
+    def fmi2GetJointPositions(self): #added to listen to with the prediction service.
+        return self.current_joint_angles
+    def fmi2GetJointVelocities(self):
+        if self.moving:
+            # Use the same CLAMPED index logic here
+            raw_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity)
+            traj_index = min(max(0, raw_index), self.movement_fidelity - 1)
+            
+            traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity)
+            return traj.qd[traj_index, :].tolist()
+        else:
+            return [0] * 6
+        
     def fmi2Terminate(self):
         ...
     

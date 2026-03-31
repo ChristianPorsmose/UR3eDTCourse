@@ -6,7 +6,7 @@ from typing import Callable, Any
 from communication import protocol
 from communication.rabbitmq import Rabbitmq
 from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import SYNCHRONOUS, WriteApi
+from influxdb_client.client.write_api import ASYNCHRONOUS,SYNCHRONOUS, WriteApi, PointSettings
 from utils.utils import load_config
 
 WriterFn = Callable[[Point], Any]
@@ -50,11 +50,11 @@ def write_datapoint_to_influxdb(writer: WriterFn, dp: dict):
 
     for field in ["q_actual", "qd_actual", "q_target", "tcp_pose"]:
         flatten_array_and_add(dp, dp_flat, field)
-
-    point = create_point("sensor_data", tags={"source": "data_recorder_service"})
+    msg_source = dp.get("source", "pt_mockup")  # Default to "pt_mockup" if source is not provided becase the mockup doest have a have a key name for source
+    point = create_point("sensor_data", tags={"source": msg_source})
     point = add_fields(point, dp_flat)
 
-    safe_write(writer, point, "Data point written successfully.")
+    safe_write(writer, point, f"Data point from {msg_source} written successfully.")
 
 
 def write_ctrl_msg_to_influxdb(writer: WriterFn, ctrl_msg: dict):
@@ -82,7 +82,7 @@ def main():
     influx_config = load_config(Path("influxdb.yml"))
 
     with Rabbitmq(**connect_config) as rabbit_mq, InfluxDBClient(**influx_config) as client:
-        write_api: WriteApi = client.write_api(write_options=SYNCHRONOUS)
+        write_api: WriteApi = client.write_api(write_options=ASYNCHRONOUS)
         writer = partial(write_api.write, bucket=influx_config["bucket"], org=influx_config["org"])
 
         subscriptions = {
