@@ -5,6 +5,7 @@ ENCODING = "ascii"
 ### ROUTING KEYS
 ROUTING_KEY_STATE = "robotarm.pt.state"
 ROUTING_KEY_CTRL = "robotarm.ctrl"
+ROUTING_KEY_RT_MODEL_STATE = "rt_model.dt.state"
 ROUTING_KEY_KINEMATIC = "kinematic.state"
 ROUTING_KEY_DEVIATION = "deviation.status"
 ROUTING_KEY_STUCK_JOINT = "stuck_joint.status"

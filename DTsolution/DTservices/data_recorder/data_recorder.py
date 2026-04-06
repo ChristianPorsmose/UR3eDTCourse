@@ -39,6 +39,22 @@ def safe_write(writer: WriterFn, point: Point, success_msg: str):
     except Exception as e:
         print(f"FAILED to write to InfluxDB: {e}")
 
+def write_model_datapoint_to_influxdb(writer: WriterFn, dp: dict):
+    dp_flat = {
+        "robot_mode": dp["robot_mode"],
+        "joint_max_speed": float(dp["joint_max_speed"]),
+        "joint_max_acceleration": float(dp["joint_max_acceleration"]),
+        "timestamp": dp["timestamp"]
+    }
+
+    for field in ["q_actual", "qd_actual", "q_target", "tcp_pose"]:
+        flatten_array_and_add(dp, dp_flat, field)
+    msg_source = dp.get("source", "dt_model")  # Default to "pt_mockup" if source is not provided becase the mockup doest have a have a key name for source
+    point = create_point("dt_model_Data", tags={"source": msg_source})
+    point = add_fields(point, dp_flat)
+
+    safe_write(writer, point, f"Data point from {msg_source} written successfully.")
+
 
 def write_datapoint_to_influxdb(writer: WriterFn, dp: dict):
     dp_flat = {
@@ -88,6 +104,7 @@ def main():
         subscriptions = {
             protocol.ROUTING_KEY_STATE: write_datapoint_to_influxdb,
             protocol.ROUTING_KEY_CTRL: write_ctrl_msg_to_influxdb,
+            protocol.ROUTING_KEY_RT_MODEL_STATE: write_model_datapoint_to_influxdb
         }
 
         for routing_key, func in subscriptions.items():

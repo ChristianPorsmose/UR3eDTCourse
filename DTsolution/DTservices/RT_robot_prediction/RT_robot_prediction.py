@@ -45,9 +45,9 @@ def run_simulation(model : KinematicModel, rabbit_mq: Rabbitmq, dt=0.05):
                 "q_target": pos,  # Assuming target positions are the same as actual positions for now
                 "timestamp": float(time.time()),
                 "robot_mode": "RUNNING" if model.moving else "IDLE",
-                "source": "rt robot prediction service",
-                "joint_max_speed": 3.14,
-                "joint_max_acceleration": 5.0,
+                "source": "rt_robot_prediction_service",
+                "joint_max_speed": 60.0,
+                "joint_max_acceleration": 80.0,
                 "tcp_pose": [0.0] * 6,
                 "simulation_time": float(current_time),
                 # Duplicates for your own use
@@ -56,7 +56,7 @@ def run_simulation(model : KinematicModel, rabbit_mq: Rabbitmq, dt=0.05):
             }
 
         # Publish outside the lock so we don't hold up the listener thread
-        rabbit_mq.send_message(protocol.ROUTING_KEY_STATE, current_state)
+        rabbit_mq.send_message(protocol.ROUTING_KEY_RT_MODEL_STATE, current_state)
 
         elapsed_time = time.time() - start_time
         time.sleep(max(0, dt - elapsed_time))
@@ -73,7 +73,7 @@ def main():
     rabbit_mq_publisher = Rabbitmq(**config)
     rabbit_mq_publisher.connect_to_server()
 
-    model = KinematicModel(movement_fidelity=1000)
+    model = KinematicModel()
 
     # Subscribe using the listener connection
     rabbit_mq_listener.subscribe(protocol.ROUTING_KEY_CTRL, 

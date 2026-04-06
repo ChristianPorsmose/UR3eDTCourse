@@ -104,12 +104,16 @@ class KinematicModel:
                 is_decelerating = t_rel >= (self.current_movement_duration - self.current_acceleration_durations)
                 is_cruising = ~(is_accelerating | is_decelerating)
 
+                # Get acceleration/velocity sign
+                delta_angles = self.commanded_joint_angles - self.current_joint_angles
+                sign = delta_angles / (np.abs(delta_angles) + 1e-6)
+
                 # Update volicities based on masks from above
                 # Accelerating: add acceleration
-                self.current_joint_velocities[is_accelerating] += self.a_max * step_size
+                self.current_joint_velocities[is_accelerating] += self.a_max * step_size * sign[is_accelerating]
 
                 # Decelerating: subtract acceleration
-                self.current_joint_velocities[is_decelerating] -= self.a_max * step_size
+                self.current_joint_velocities[is_decelerating] -= self.a_max * step_size * sign[is_decelerating]
 
                 # Cruising: (Implicitly does nothing, no code needed)
 
