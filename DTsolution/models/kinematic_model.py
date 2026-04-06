@@ -1,93 +1,112 @@
-import roboticstoolbox as rtb
 import numpy as np
 
 class KinematicModel:
-    def __init__(self, movement_fidelity : int = 50):
+    def __init__(self, max_velocity=np.deg2rad(60.0), max_acceleration=np.deg2rad(80.0)):
         self.time = 0.0 # All time measured in seconds
-        self.current_joint_angles = [0] * 6
-        self.movement_fidelity = movement_fidelity
+        
+        # System Limits (Replace defaults with your actual robot specs)
+        self.v_max = max_velocity
+        self.a_max = max_acceleration
+
+        # State Variables
+        self.current_joint_angles = np.array([0.0] * 6)
+        self.current_joint_velocities = np.array([0.0] * 6)
 
         # Inputs
-        self.commanded_joint_angles = [0] * 6
+        self.commanded_joint_angles = np.array([0.0] * 6)
 
         # Movement variables
-        self.current_movement_start_angles = [0] * 6
-        self.current_movement_start_time = 0.0 # s
-        self.current_movement_duration = 0.0 # s
         self.moving = False
+        self.current_movement_start_time = 0.0
+        self.current_movement_duration = 0.0
+        self.current_acceleration_duration = 0.0
 
         # Experiment variables
         self.start_time = 0.0
         self.stop_time = 0.0
 
-        #? This seems unnecessary since movment is not dependent on robot arm construction???
-        # Setup provided kinematic model
-        # link1 = rtb.RevoluteDH(d=0.15185, a=0.0, alpha=np.pi/2)
-        # link2 = rtb.RevoluteDH(d=0.0, a=-0.24355, alpha=0.0)
-        # link3 = rtb.RevoluteDH(d=0.0, a=-0.2132, alpha=0.0)
-        # link4 = rtb.RevoluteDH(d=0.13105, a=0.0, alpha=np.pi/2)
-        # link5 = rtb.RevoluteDH(d=0.08535, a=0.0, alpha=-np.pi/2)
-        # link6 = rtb.RevoluteDH(d=0.0921, a=0.0, alpha=0.0)
-        # Create the robot object
-        # self.robot = rtb.DHRobot([link1, link2, link3, link4, link5, link6], name="robot")
+    def _determine_movement_duration_and_acceleration_duration(self, start_angles: list, end_angles: list) -> float:
+        # Determine angle differences
+        delta_x = np.abs(np.array(end_angles) - np.array(start_angles))
+        max_delta_x = np.max(delta_x)
 
-    def _determine_movement_duration(self, start_angles: list, end_angles: list) -> float:
-        # Calculate angle difference
-        max_angle_diff = np.max(np.abs(np.array(start_angles) - np.array(end_angles)))
-        
-        # TODO: Is the model good enough? The fact that it does not go through (0, 0) raises suspision, maybe also try and collect data at very very small movements
-        # Refer to train_movement_time_model.ipynb to see where the numbers are from
-        return 0.95984308 * max_angle_diff + 0.76497454
+        # IDEAL CASE: t_acc <= T/3
+        # Determine acceleration time
+        t_acc = self.v_max / self.a_max
+        delta_x_acc = (self.v_max / 2) * t_acc
 
-    def fmi2SetCommandedJointAngles(self, angles: list):
-        # Setup variables for move to be made
-        self.commanded_joint_angles = angles
-        self.current_movement_start_angles = self.current_joint_angles
-        self.current_movement_duration = self._determine_movement_duration(self.current_joint_angles, self.commanded_joint_angles)
+        # Determine cruise time
+        t_cruise = (max_delta_x - 2 * delta_x_acc) / self.v_max
+        delta_x_cruise = self.v_max * t_cruise
 
-    def fmi2StartMovement(self):
-        self.moving = True
-        self.current_movement_start_time = self.time
+        # Set IDEAL values
+        movement_duration = t_cruise + 2 * t_acc
+        acceleration_duration = t_acc
 
+        # NON-IDEAL CASE check: t_acc > T/3
+        if t_acc > t_cruise:
+            # NON-IDEAL CASE: t_acc > T/3
+            tau = np.sqrt(max_delta_x/(2*self.a_max))
+            v = self.a_max * tau
+
+            # Overwrite IDEAL values with NON-IDEAL values
+            movement_duration = 3*tau
+            acceleration_duration = tau
+
+        return movement_duration, acceleration_duration
+
+
+    def fmi2Instantiate(self):
+        self.time = 0.0
+        self.current_joint_angles = np.array([0.0] * 6)
+        self.current_joint_velocities = np.array([0.0] * 6)
+        self.commanded_joint_angles = np.array([0.0] * 6)
+        self.moving = False
 
     def fmi2SetupExperiment(self, start_time: float, stop_time: float):
         self.start_time = start_time
         self.stop_time = stop_time
 
-    def fmi2Instantiate(self):
-        self.time = 0.0
-        self.current_joint_angles = [0] * 6
-        self.commanded_joint_angles = [0] * 6
+    def fmi2SetCommandedJointAngles(self, angles: list):
+        # Setup variables for move to be made
+        self.commanded_joint_angles = np.array(angles)
+        self.current_movement_duration, self.current_acceleration_duration = self._determine_movement_duration_and_acceleration_duration(self.current_joint_angles, self.commanded_joint_angles)
+
+    def fmi2StartMovement(self):
+        self.moving = True
+        self.current_movement_start_time = self.time
+        # Capture the exact starting position for this movement
 
     def fmi2DoStep(self, current_time: float, step_size: float): 
         self.time = current_time + step_size
 
         if self.moving:
-            # Check if we have surpassed the total duration
-            if self.time > self.current_movement_start_time + self.current_movement_duration:
-                self.current_joint_angles = self.commanded_joint_angles
-                self.moving = False # It's usually better to stop moving once reached
-            else:
-                # Calculate index and CLAMP it to the max allowed (fidelity - 1)
-                raw_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity)
-                traj_index = min(max(0, raw_index), self.movement_fidelity - 1)
-                
-                traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity)
-                self.current_joint_angles = traj.q[traj_index, :].tolist()
-
-    def fmi2GetJointPositions(self): #added to listen to with the prediction service.
-        return self.current_joint_angles
-    def fmi2GetJointVelocities(self):
-        if self.moving:
-            # Use the same CLAMPED index logic here
-            raw_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity)
-            traj_index = min(max(0, raw_index), self.movement_fidelity - 1)
+            t_rel = self.time - self.current_movement_start_time
             
-            traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity)
-            return traj.qd[traj_index, :].tolist()
-        else:
-            return [0] * 6
+            # Check if we have surpassed the total duration
+            if t_rel >= self.current_movement_duration:
+                self.current_joint_angles = self.commanded_joint_angles.copy()
+                self.current_joint_velocities = np.array([0.0] * 6)
+                self.moving = False
+            else: # Else keep on doing the movement
+                # Accelerating
+                if t_rel <= self.current_acceleration_duration:
+                    self.current_joint_velocities += self.a_max * step_size
+                # Cruising
+                elif t_rel < self.current_movement_duration - self.current_acceleration_duration:
+                    # No change in velocity
+                    pass
+                # Decelerating
+                else:
+                    self.current_joint_velocities -= self.a_max * step_size
+                self.current_joint_angles += self.current_joint_velocities * step_size
+
+    def fmi2GetJointPositions(self) -> list: 
+        return self.current_joint_angles.copy().tolist()
+        
+    def fmi2GetJointVelocities(self):
+        # We now calculate this for free during fmi2DoStep
+        return self.current_joint_velocities.copy().tolist()
         
     def fmi2Terminate(self):
-        ...
-    
+        pass
