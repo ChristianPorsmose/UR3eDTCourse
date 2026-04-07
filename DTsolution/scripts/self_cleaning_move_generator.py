@@ -1,7 +1,6 @@
 import threading
 import time
 import numpy as np
-from functools import partial
 from pathlib import Path
 from communication import protocol
 from communication.rabbitmq import Rabbitmq
@@ -19,6 +18,14 @@ def create_random_program(scale: float = 0.5*np.pi, vel: float = 60, acc: float 
         protocol.CtrlMsgKeys.MAX_VELOCITY: vel,
         protocol.CtrlMsgKeys.ACCELERATION: acc
     }
+
+def inject_stuck_joints():
+    control_queue.put({
+    protocol.CtrlMsgKeys.TYPE: protocol.CtrlMsgFields.INJECT_FAULT,
+    protocol.CtrlMsgKeys.FAULT_TYPE: protocol.FaultTypes.STUCK_JOINT,
+    protocol.CtrlMsgKeys.JOINTS: [0, 1, 2],
+    })
+    publish_event.set()
 
 def enqueue_program(scale: float = 0.5*np.pi):
     control_queue.put(create_random_program(scale))
@@ -48,7 +55,11 @@ def main():
         while True:
             enqueue_program(scale=4*np.pi)
             print("Enqueued new program")
-            time.sleep(60)
+            time.sleep(20)
+            if np.random.rand() < 1:
+                inject_stuck_joints()
+                print("Injected stuck joint fault")
+            time.sleep(30)
 
 if __name__ == "__main__":
     main()

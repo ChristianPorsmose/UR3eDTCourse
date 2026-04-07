@@ -16,7 +16,7 @@ def publisher_loop(rabbit_mq: Rabbitmq, routing_key : str, publish_queue : queue
 
     while True:
         msg = publish_queue.get()  
-        
+        print(msg)
         rabbit_mq.connection.add_callback_threadsafe(
             lambda m=msg: publish(message=m)
         )
