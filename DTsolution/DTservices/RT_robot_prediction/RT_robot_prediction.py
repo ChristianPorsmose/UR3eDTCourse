@@ -1,7 +1,6 @@
 from pathlib import Path
 import time
 from xml.parsers.expat import model
-
 from utils.utils import load_config
 from communication import protocol
 from communication.rabbitmq import Rabbitmq
@@ -28,32 +27,35 @@ def inject_ctrl_msg_to_influxdb(writer, body):
         
 def run_simulation(model : KinematicModel, rabbit_mq: Rabbitmq, dt=0.05):
     i = 0
+    substeps = 100
+    internal_dt = dt / substeps #.05 / 100 = 0.0005s = 0.5ms/ 2000 hz
     while True:
         start_time = time.time()
         
         with model_lock: # Keep EVERYTHING model-related inside the lock
-            current_time = i * dt
-            model.fmi2DoStep(current_time, dt)
+            for _ in range(substeps):
+                current_time = i * dt + (_*internal_dt) 
+                model.fmi2DoStep(current_time, dt)
 
-            pos = [float(x) for x in model.fmi2GetJointPositions()]
-            vel = [float(x) for x in model.fmi2GetJointVelocities()]
+                pos = [float(x) for x in model.fmi2GetJointPositions()]
+                vel = [float(x) for x in model.fmi2GetJointVelocities()]
 
-            # Define the state while we have the lock
-            current_state = {
-                "q_actual": pos,
-                "qd_actual": vel,
-                "q_target": pos,  # Assuming target positions are the same as actual positions for now
-                "timestamp": float(time.time()),
-                "robot_mode": "RUNNING" if model.moving else "IDLE",
-                "source": "rt_robot_prediction_service",
-                "joint_max_speed": 60.0,
-                "joint_max_acceleration": 80.0,
-                "tcp_pose": [0.0] * 6,
-                "simulation_time": float(current_time),
-                # Duplicates for your own use
-                #"joint_positions": model.fmi2GetJointPositions(),
-                #"joint_velocities": model.fmi2GetJointVelocities(),
-            }
+                # Define the state while we have the lock
+                current_state = {
+                    "q_actual": pos,
+                    "qd_actual": vel,
+                    "q_target": pos,  # Assuming target positions are the same as actual positions for now
+                    "timestamp": float(time.time()),
+                    "robot_mode": "RUNNING" if model.moving else "IDLE",
+                    "source": "rt_robot_prediction_service",
+                    "joint_max_speed": 60.0,
+                    "joint_max_acceleration": 80.0,
+                    "tcp_pose": [0.0] * 6,
+                    "simulation_time": float(current_time),
+                    # Duplicates for your own use
+                    #"joint_positions": model.fmi2GetJointPositions(),
+                    #"joint_velocities": model.fmi2GetJointVelocities(),
+                }
 
         # Publish outside the lock so we don't hold up the listener thread
         rabbit_mq.send_message(protocol.ROUTING_KEY_RT_MODEL_STATE, current_state)
