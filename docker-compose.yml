@@ -82,15 +82,15 @@ services:
       - ./communication/connect.yml:/app/connect.yml:rw
     depends_on:
       - mockup
-  # robot_ctrl:
-  #   container_name: robot_ctrl
-  #   build: 
-  #     context: .
-  #     dockerfile: DTsolution/scripts/Dockerfile
-  #   volumes:
-  #     - ./communication/connect.yml:/app/connect.yml:rw
-  #   depends_on:
-  #     - mockup
+  robot_ctrl:
+    container_name: robot_ctrl
+    build: 
+      context: .
+      dockerfile: DTsolution/scripts/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+    depends_on:
+      - mockup
 
 networks:
   shared-communication:

@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://cucet23ppg615"]
+
+[ext_resource type="PackedScene" uid="uid://cdvgoyermosqe" path="res://RobotArm.tscn" id="1_c6gwx"]
+[ext_resource type="Script" path="res://PTScript.py" id="2_2dftf"]
+[ext_resource type="Script" path="res://DTScript.py" id="3_bcbcq"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_bcbcq"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_js7pq"]
+albedo_color = Color(2.4065375e-07, 0.33162162, 0.3336757, 1)
+
+[sub_resource type="PhysicalSkyMaterial" id="PhysicalSkyMaterial_bcbcq"]
+mie_coefficient = 0.01
+mie_color = Color(0.3538871, 0.8027582, 0.8656605, 1)
+turbidity = 210.46
+
+[sub_resource type="Sky" id="Sky_js7pq"]
+sky_material = SubResource("PhysicalSkyMaterial_bcbcq")
+
+[sub_resource type="Environment" id="Environment_eu7l1"]
+background_mode = 2
+background_energy_multiplier = 7.51
+sky = SubResource("Sky_js7pq")
+ambient_light_color = Color(0.70980394, 0.70980394, 0.3372549, 1)
+
+[node name="Node3D" type="Node3D" unique_id=543128320]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1600876674]
+transform = Transform3D(0.9708756, 0.05163912, -0.23395297, 0, 0.9764958, 0.21553645, 0.2395842, -0.20925906, 0.948056, -0.28942817, 0.581311, 0.7276381)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1563189592]
+transform = Transform3D(0.9470423, 0.19635347, -0.2540792, 0, 0.7912556, 0.61148566, 0.32110888, -0.57910275, 0.7493525, -1.8678712, 0, 1.1500335)
+
+[node name="RobotArm" parent="." unique_id=2049167072 instance=ExtResource("1_c6gwx")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.3, 0, 0)
+script = ExtResource("2_2dftf")
+
+[node name="RobotArm2" parent="." unique_id=1227584811 instance=ExtResource("1_c6gwx")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.3, 0, 0)
+script = ExtResource("3_bcbcq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=697116275]
+transform = Transform3D(67.380066, 0, 0, 0, 1, 0, 0, 0, 101.47909, 0.03773606, 0, 0)
+mesh = SubResource("PlaneMesh_bcbcq")
+surface_material_override/0 = SubResource("StandardMaterial3D_js7pq")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1636521763]
+environment = SubResource("Environment_eu7l1")
