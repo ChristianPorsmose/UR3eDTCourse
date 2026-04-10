@@ -57,7 +57,7 @@ def main():
             print("Enqueued new program")
             time.sleep(20)
             if np.random.rand() < 1:
-                inject_stuck_joints()
+                # inject_stuck_joints()
                 print("Injected stuck joint fault")
             time.sleep(30)
 

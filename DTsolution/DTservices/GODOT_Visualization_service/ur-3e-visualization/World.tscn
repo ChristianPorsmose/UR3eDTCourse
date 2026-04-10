@@ -26,6 +26,9 @@ background_energy_multiplier = 7.51
 sky = SubResource("Sky_js7pq")
 ambient_light_color = Color(0.70980394, 0.70980394, 0.3372549, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eu7l1"]
+albedo_color = Color(0.8501547, 0.85231924, 0.852319, 1)
+
 [node name="Node3D" type="Node3D" unique_id=543128320]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1600876674]
@@ -61,6 +64,27 @@ surface_material_override/0 = SubResource("StandardMaterial3D_js7pq")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1636521763]
 environment = SubResource("Environment_eu7l1")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=1132482114]
+transform = Transform3D(-0.00010028277, -58.152912, 0, 2294.2024, -2.5419445e-06, 0, 0, 0, 10298.004, 1.770124, -9.536743e-07, 0.0077753067)
+mesh = SubResource("PlaneMesh_bcbcq")
+surface_material_override/0 = SubResource("StandardMaterial3D_eu7l1")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="." unique_id=327715442]
+transform = Transform3D(4.383499e-12, 2.5419447e-06, 10298.005, 2294.2024, -2.5419447e-06, 0, 0.00010028277, 58.152916, -0.0004501401, 0.36281228, -9.536743e-07, -1.7602594)
+mesh = SubResource("PlaneMesh_bcbcq")
+surface_material_override/0 = SubResource("StandardMaterial3D_eu7l1")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1451790433]
+
+[node name="Label" type="RichTextLabel" parent="CanvasLayer" unique_id=1508537633]
+offset_right = 163.0
+offset_bottom = 49.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+bbcode_enabled = true
+text = "  [color=red]Red: RT-model[/color]
+  [color=blue]Blue: PT-Mockup[/color]"
 
 [editable path="RobotArm"]
 [editable path="RobotArm2"]
