@@ -3,6 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://cdvgoyermosqe" path="res://RobotArm.tscn" id="1_c6gwx"]
 [ext_resource type="Script" path="res://PTScript.py" id="2_2dftf"]
 [ext_resource type="Script" path="res://DTScript.py" id="3_bcbcq"]
+[ext_resource type="Material" uid="uid://eweuxfrgjchu" path="res://PT_color.tres" id="3_eu7l1"]
+[ext_resource type="Material" uid="uid://d28wf8e82752k" path="res://DT_color.tres" id="5_p1v5b"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_bcbcq"]
 
@@ -18,7 +20,8 @@ turbidity = 210.46
 sky_material = SubResource("PhysicalSkyMaterial_bcbcq")
 
 [sub_resource type="Environment" id="Environment_eu7l1"]
-background_mode = 2
+background_mode = 1
+background_color = Color(0.15487978, 0.15499598, 0.1091729, 1)
 background_energy_multiplier = 7.51
 sky = SubResource("Sky_js7pq")
 ambient_light_color = Color(0.70980394, 0.70980394, 0.3372549, 1)
@@ -35,9 +38,21 @@ transform = Transform3D(0.9470423, 0.19635347, -0.2540792, 0, 0.7912556, 0.61148
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.3, 0, 0)
 script = ExtResource("2_2dftf")
 
+[node name="C-2007033" parent="RobotArm/Base/Link1/Link2/Link3/Link4/Link5/Link6/Body" parent_id_path=PackedInt32Array(2049167072, 1592501089) index="0" unique_id=540720623]
+material_override = ExtResource("3_eu7l1")
+
+[node name="Copy of Base_UR3_G5^1006926_Solid" parent="RobotArm/Base/Body" parent_id_path=PackedInt32Array(2049167072, 2118171710) index="0" unique_id=1153221351]
+material_override = ExtResource("3_eu7l1")
+
 [node name="RobotArm2" parent="." unique_id=1227584811 instance=ExtResource("1_c6gwx")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.3, 0, 0)
 script = ExtResource("3_bcbcq")
+
+[node name="C-2007033" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Link5/Link6/Body" parent_id_path=PackedInt32Array(1227584811, 1592501089) index="0" unique_id=540720623]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Base_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Body" parent_id_path=PackedInt32Array(1227584811, 2118171710) index="0" unique_id=1153221351]
+material_override = ExtResource("5_p1v5b")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=697116275]
 transform = Transform3D(67.380066, 0, 0, 0, 1, 0, 0, 0, 101.47909, 0.03773606, 0, 0)
@@ -46,3 +61,6 @@ surface_material_override/0 = SubResource("StandardMaterial3D_js7pq")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1636521763]
 environment = SubResource("Environment_eu7l1")
+
+[editable path="RobotArm"]
+[editable path="RobotArm2"]
