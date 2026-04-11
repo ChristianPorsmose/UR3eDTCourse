@@ -36,9 +36,11 @@ transform = Transform3D(0.9708756, 0.05163912, -0.23395297, 0, 0.9764958, 0.2155
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1563189592]
 transform = Transform3D(0.9470423, 0.19635347, -0.2540792, 0, 0.7912556, 0.61148566, 0.32110888, -0.57910275, 0.7493525, -1.8678712, 0, 1.1500335)
+light_energy = 0.689
+shadow_enabled = true
 
 [node name="RobotArm" parent="." unique_id=2049167072 instance=ExtResource("1_c6gwx")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.3, 0, 0)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
 script = ExtResource("2_2dftf")
 
 [node name="C-2007033" parent="RobotArm/Base/Link1/Link2/Link3/Link4/Link5/Link6/Body" parent_id_path=PackedInt32Array(2049167072, 1592501089) index="0" unique_id=540720623]
@@ -48,10 +50,43 @@ material_override = ExtResource("3_eu7l1")
 material_override = ExtResource("3_eu7l1")
 
 [node name="RobotArm2" parent="." unique_id=1227584811 instance=ExtResource("1_c6gwx")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.3, 0, 0)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
 script = ExtResource("3_bcbcq")
 
 [node name="C-2007033" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Link5/Link6/Body" parent_id_path=PackedInt32Array(1227584811, 1592501089) index="0" unique_id=540720623]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link5_UR3_G5^1006926_Solid2" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Link5/Body" parent_id_path=PackedInt32Array(1227584811, 558038297) index="0" unique_id=1160142935]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link5_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Link5/Body" parent_id_path=PackedInt32Array(1227584811, 558038297) index="1" unique_id=371995724]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link4_UR3_G5^1006926_Solid2" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Body" parent_id_path=PackedInt32Array(1227584811, 1125092209) index="0" unique_id=1941051948]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link4_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Link1/Link2/Link3/Link4/Body" parent_id_path=PackedInt32Array(1227584811, 1125092209) index="1" unique_id=1706928003]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link3_UR3_G5^1006926_Solid2" parent="RobotArm2/Base/Link1/Link2/Link3/Body" parent_id_path=PackedInt32Array(1227584811, 176096638) index="0" unique_id=939638528]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link3_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Link1/Link2/Link3/Body" parent_id_path=PackedInt32Array(1227584811, 176096638) index="1" unique_id=2114351275]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link2_UR3_G5^1006926_Solid3" parent="RobotArm2/Base/Link1/Link2/Body" parent_id_path=PackedInt32Array(1227584811, 2041099544) index="0" unique_id=193763458]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link2_UR3_G5^1006926_Solid2" parent="RobotArm2/Base/Link1/Link2/Body" parent_id_path=PackedInt32Array(1227584811, 2041099544) index="1" unique_id=366348678]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link2_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Link1/Link2/Body" parent_id_path=PackedInt32Array(1227584811, 2041099544) index="2" unique_id=807154260]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link1_UR3_G5^1006926_Solid2" parent="RobotArm2/Base/Link1/Body" parent_id_path=PackedInt32Array(1227584811, 1340251230) index="0" unique_id=689097579]
+material_override = ExtResource("5_p1v5b")
+
+[node name="Copy of Link1_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Link1/Body" parent_id_path=PackedInt32Array(1227584811, 1340251230) index="1" unique_id=275763856]
 material_override = ExtResource("5_p1v5b")
 
 [node name="Copy of Base_UR3_G5^1006926_Solid" parent="RobotArm2/Base/Body" parent_id_path=PackedInt32Array(1227584811, 2118171710) index="0" unique_id=1153221351]
@@ -78,13 +113,13 @@ surface_material_override/0 = SubResource("StandardMaterial3D_eu7l1")
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1451790433]
 
 [node name="Label" type="RichTextLabel" parent="CanvasLayer" unique_id=1508537633]
-offset_right = 163.0
+offset_right = 274.0
 offset_bottom = 49.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 bbcode_enabled = true
-text = "  [color=red]Red: RT-model[/color]
-  [color=blue]Blue: PT-Mockup[/color]"
+text = "  [color=lightblue]Ghost: DT Model[/color]
+  [color=black]Opaque: PT-Mockup[/color]"
 
 [editable path="RobotArm"]
 [editable path="RobotArm2"]
