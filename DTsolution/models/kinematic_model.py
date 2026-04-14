@@ -47,11 +47,11 @@ class KinematicModel:
         # NON-IDEAL CASE check: t_acc > T/3
         if t_acc > t_cruise:
             # NON-IDEAL CASE: t_acc > T/3
-            tau = np.sqrt(max_delta_x/(2*self.a_max))
+            tau = np.sqrt(max_delta_x/(self.a_max))
             v = self.a_max * tau
 
             # Overwrite IDEAL values with NON-IDEAL values
-            movement_duration = 3*tau
+            movement_duration = 2*tau
             max_acceleration_duration = tau
 
         acceleration_durations = np.zeros_like(self.current_joint_velocities)
