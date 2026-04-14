@@ -7,7 +7,7 @@ from py4godot.classes.Node3D import Node3D
 # # Custom imports
 from communication import protocol
 from communication.rabbitmq import Rabbitmq
-from communication.utils import load_config
+from utils.utils import load_config
 from pathlib import Path
 import yaml
 import threading
@@ -25,8 +25,7 @@ class PTScript(Node3D):
 		self.message_queue = queue.Queue()
 
 		config_path = Path("communication/connect.yml")
-		with open(config_path, 'r') as file:
-			self.connect_config = yaml.safe_load(file)
+		self.connect_config = load_config(config_path)
 			
 		print("Config loaded. Starting RabbitMQ thread...")
 		

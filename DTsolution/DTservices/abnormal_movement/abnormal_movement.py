@@ -1,5 +1,4 @@
 from collections import deque
-from functools import partial
 import threading
 import numpy as np
 from scipy.interpolate import interp1d
@@ -8,7 +7,7 @@ from pathlib import Path
 from communication.protocol import RobotArmStateKeys as rb
 from communication.protocol import Deviation as d
 from communication.protocol import ROUTING_KEY_DEVIATION, ROUTING_KEY_STATE, ROUTING_KEY_RT_MODEL_STATE
-from utils.utils import load_config, publisher_loop
+from utils.utils import interpolate, load_config, publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
 
@@ -17,22 +16,11 @@ kinematic_queue = deque(maxlen=20) # might need to be longer for accuraacy
 publish_queue = queue.Queue()
 EPSILON = 1.6 # maybe change this? 
 
-def interpolate(target_time, data):
-    if len(data) < 2:
-        return None
-
-    times = np.array([d[rb.TIMESTAMP] for d in data])
-    values = np.array([d[rb.Q_ACTUAL] for d in data])
-
-    f = interp1d(times, values, axis=0, kind='linear', fill_value="extrapolate")
-    return f(target_time)
-
-
 def deviation_loop():
     while True:
         latest_mock = latest_mock_queue.get()
         mock_time = latest_mock[rb.TIMESTAMP]
-        kin_value = interpolate(mock_time, list(kinematic_queue))
+        kin_value = interpolate(mock_time, list(kinematic_queue), rb.Q_ACTUAL)
         if kin_value is None :
             continue
         deviation = np.array(latest_mock[rb.Q_ACTUAL]) - np.array(kin_value)
