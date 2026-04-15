@@ -14,17 +14,14 @@ ROUTING_KEY_FILTERED_STATE = "filtered.state"
 ### MESSAGES
 class CtrlMsgFields:
     """Types of control messages that can be sent to the robot arm."""
-
     LOAD_PROGRAM = "load_program"
     PLAY = "play"
     PAUSE = "pause"
     STOP = "stop"
     INJECT_FAULT = "inject_fault"
 
-
 class CtrlMsgKeys:
     """Keys used in control messages sent to the robot arm."""
-
     TYPE = "type"
     JOINT_POSITIONS = "joint_positions"
     MAX_VELOCITY = "max_velocity"
@@ -34,12 +31,10 @@ class CtrlMsgKeys:
     JOINTS = "joints"
     DURATION = "duration"
 
-
 class FaultTypes:
     """Types of faults that can be injected into the robot arm."""
     STUCK_JOINT = "stuck_joint"
     WEAR = "wear"
-
 
 class RobotArmStateKeys:
     """Keys used in state messages sent from the robot arm."""
