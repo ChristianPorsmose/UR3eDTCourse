@@ -12,8 +12,10 @@ from ParticleFilter import ParticleFilter
 consumer_queue = queue.Queue()
 kinematic_queue = deque(maxlen=20)
 publish_queue = queue.Queue()
-PROCESS_NOISE_STD = 0.5 # TODO : estimate
-MEASUREMENT_NOISE_STD = 0.1 # TODO : estimate
+
+PROCESS_NOISE_STD = 6.310483282548284e-06  # TODO : estimate
+MEASUREMENT_NOISE_STD = 6.310483282548284e-06 # TODO : estimate
+
 pf = ParticleFilter(num_particles=1000, process_noise_std=PROCESS_NOISE_STD, measurement_noise_std=MEASUREMENT_NOISE_STD)
 
 def filter_loop():

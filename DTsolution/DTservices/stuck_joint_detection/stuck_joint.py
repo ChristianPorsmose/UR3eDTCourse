@@ -7,7 +7,6 @@ from communication.rabbitmq import Rabbitmq
 from communication.typed_protocol import PhysicalTwinState, StuckJointStatus, InjectFault
 from communication.typed_protocol_client import TypedRabbitMQClient
 import queue
-import datetime
 
 consumer_queue : queue.Queue[PhysicalTwinState] = queue.Queue()
 publish_queue : queue.Queue[StuckJointStatus] = queue.Queue()
@@ -39,7 +38,6 @@ def stuck_joints_loop():
         if np.any(stuck_mask):
             publish_queue.put(
                 StuckJointStatus(
-                    datetime.datetime.now().time(),
                     stuck_mask.tolist()
                 )
             )

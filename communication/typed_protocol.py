@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from typing import Protocol, Type, TypeVar, runtime_checkable, Union
-import datetime
+from dataclasses import dataclass, field
+from typing import Protocol, TypeVar, runtime_checkable, Union
+from datetime import datetime, UTC
 
 T = TypeVar("T", bound="MsgProtocol")
 
@@ -61,9 +61,11 @@ class InjectFault(CtrlMsg):
     fault_type: Union[Wear, StuckJoint]
     type : str = "inject_fault"
 
-@dataclass
+@dataclass(kw_only=True)
 class TimeStamped:
-    timestamp : datetime.time
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat()
+    )
 
 @dataclass
 class RobotStateMessage(TimeStamped):

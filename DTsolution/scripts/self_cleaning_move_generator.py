@@ -43,10 +43,10 @@ def main():
             enqueue_program(scale=4*np.pi)
             print("Enqueued new program")
             time.sleep(30)
-            if np.random.rand() < 1:
-                inject_stuck_joints()
-                print("Injected stuck joint fault")
-            time.sleep(30)
+            #if np.random.rand() < 1:
+                #inject_stuck_joints()
+                #print("Injected stuck joint fault")
+            #time.sleep(30)
 
 if __name__ == "__main__":
     main()

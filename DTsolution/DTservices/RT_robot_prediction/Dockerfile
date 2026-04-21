@@ -11,6 +11,10 @@ COPY startup/ startup/
 COPY communication/__init__.py communication/
 COPY communication/rabbitmq.py communication/
 COPY communication/protocol.py communication/
+
+COPY communication/typed_protocol.py communication/
+COPY communication/typed_protocol_client.py communication/
+
 RUN touch README.md
 
 RUN poetry install
