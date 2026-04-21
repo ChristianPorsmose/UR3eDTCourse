@@ -2,64 +2,51 @@ import threading
 import time
 import numpy as np
 from pathlib import Path
-from communication import protocol
 from communication.rabbitmq import Rabbitmq
-from utils.utils import load_config
+from communication.typed_protocol import LoadProgram, Play, MsgProtocol, InjectFault, StuckJoint
+from communication.typed_protocol_client import TypedRabbitMQClient
+from utils.utils import load_config, typed_publisher_loop
 import queue
 
-control_queue = queue.Queue()
-publish_event = threading.Event()
+control_queue :  queue.Queue[MsgProtocol]  = queue.Queue()
 
-def create_random_program(scale: float = 0.5*np.pi, vel: float = 60, acc: float = 80):
+def create_random_program(scale: float = 0.5*np.pi, vel: float = 60, acc: float = 80) -> LoadProgram:
     position = ((np.random.rand(6) - 0.5) * scale).tolist()
-    return {
-        protocol.CtrlMsgKeys.TYPE: protocol.CtrlMsgFields.LOAD_PROGRAM,
-        protocol.CtrlMsgKeys.JOINT_POSITIONS: [position],
-        protocol.CtrlMsgKeys.MAX_VELOCITY: vel,
-        protocol.CtrlMsgKeys.ACCELERATION: acc
-    }
+    return LoadProgram(
+        joint_positions = [position],
+        max_velocity = vel,
+        acceleration= acc
+    )
 
 def inject_stuck_joints():
-    control_queue.put({
-    protocol.CtrlMsgKeys.TYPE: protocol.CtrlMsgFields.INJECT_FAULT,
-    protocol.CtrlMsgKeys.FAULT_TYPE: protocol.FaultTypes.STUCK_JOINT,
-    protocol.CtrlMsgKeys.JOINTS: [0, 1, 2],
-    })
-    publish_event.set()
+    control_queue.put(
+        InjectFault(
+            StuckJoint(
+                [0, 1, 2]
+            )
+        )
+    )
 
 def enqueue_program(scale: float = 0.5*np.pi):
     control_queue.put(create_random_program(scale))
-    control_queue.put({protocol.CtrlMsgKeys.TYPE: protocol.CtrlMsgFields.PLAY})
-    publish_event.set()
-
-
-def publisher_loop(rabbit_mq: Rabbitmq):
-    while True:
-        publish_event.wait()
-
-        while not control_queue.empty():
-            msg = control_queue.get()
-            rabbit_mq.send_message(routing_key=protocol.ROUTING_KEY_CTRL, message=msg)
-            print("Published:", msg)
-
-        publish_event.clear()
+    control_queue.put(Play())
 
 
 def main():
     config = load_config(Path("connect.yml"))
     print("STARTING MOVE GENERATOR")
 
-    with Rabbitmq(**config) as rabbit_mq:
-        threading.Thread(target=lambda: publisher_loop(rabbit_mq), daemon=True).start()
+    with TypedRabbitMQClient(Rabbitmq(**config)) as typed_client:
+        threading.Thread(target=lambda: typed_publisher_loop(typed_client, control_queue), daemon=True).start()
 
         while True:
             enqueue_program(scale=4*np.pi)
             print("Enqueued new program")
-            time.sleep(20)
-            if np.random.rand() < 1:
-                # inject_stuck_joints()
-                print("Injected stuck joint fault")
             time.sleep(30)
+            #if np.random.rand() < 1:
+                #inject_stuck_joints()
+                #print("Injected stuck joint fault")
+            #time.sleep(30)
 
 if __name__ == "__main__":
     main()
