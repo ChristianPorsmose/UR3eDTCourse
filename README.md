@@ -48,3 +48,10 @@ poetry install
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
 
+
+
+## DOCKER COMPOSE !!!! 
+
+docker build -f Dockerfile.base -t communication-base .
+
+docker compose up --build

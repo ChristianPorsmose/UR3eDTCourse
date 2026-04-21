@@ -1,6 +1,7 @@
-FROM python:3.11
+FROM communication-base
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    build-essential gcc g++ python3-dev
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 
@@ -8,19 +9,12 @@ RUN pip install poetry
 COPY pyproject.toml .
 
 COPY startup/ startup/
-COPY communication/__init__.py communication/
-COPY communication/rabbitmq.py communication/
-COPY communication/protocol.py communication/
-
-COPY communication/typed_protocol.py communication/
-COPY communication/typed_protocol_client.py communication/
 
 RUN touch README.md
 
 RUN poetry install
 
 COPY DTsolution/models DTsolution/models
-COPY DTsolution/utils utils
 COPY DTsolution/DTservices/RT_robot_prediction .
 
 

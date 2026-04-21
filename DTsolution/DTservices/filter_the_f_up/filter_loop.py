@@ -9,6 +9,7 @@ from utils.utils import load_config, publisher_loop
 from communication.rabbitmq import ROUTING_KEY_FILTERED_STATE, Rabbitmq
 import queue
 from ParticleFilter import ParticleFilter
+
 consumer_queue = queue.Queue()
 kinematic_queue = deque(maxlen=20)
 publish_queue = queue.Queue()
