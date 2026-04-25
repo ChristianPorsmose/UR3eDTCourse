@@ -38,7 +38,8 @@ def stuck_joints_loop():
         if np.any(stuck_mask):
             publish_queue.put(
                 StuckJointStatus(
-                    stuck_mask.tolist()
+                    stuck_mask.tolist(),
+                    joint_positions = q_actuals[-1].tolist()
                 )
             )
 

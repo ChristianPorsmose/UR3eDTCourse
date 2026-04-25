@@ -101,6 +101,7 @@ class Deviation(TimeStamped):
 @dataclass
 class StuckJointStatus(TimeStamped):
     stuck_joints: list[bool]
+    joint_positions : list[float]
 
     @classmethod
     def routing_key(cls) -> str:
