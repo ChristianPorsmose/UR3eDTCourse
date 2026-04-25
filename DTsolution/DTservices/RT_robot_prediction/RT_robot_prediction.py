@@ -27,15 +27,12 @@ def inject_ctrl_msg_to_influxdb(writer, body):
         
 def run_simulation(model : KinematicModel, rabbit_mq: Rabbitmq, dt=0.05):
     i = 0
-    substeps = 100
-    internal_dt = dt / substeps #.05 / 100 = 0.0005s = 0.5ms/ 2000 hz
     while True:
         start_time = time.time()
         
         with model_lock: # Keep EVERYTHING model-related inside the lock
-            for _ in range(substeps):
-                current_time = i * dt + (_*internal_dt) 
-                model.fmi2DoStep(current_time, internal_dt)
+            current_time = i * dt
+            model.fmi2DoStep(current_time, dt)
 
             pos = [float(x) for x in model.fmi2GetJointPositions()]
             vel = [float(x) for x in model.fmi2GetJointVelocities()]

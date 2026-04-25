@@ -6,7 +6,7 @@ class KinematicModel:
         
         # System Limits (Replace defaults with your actual robot specs)
         self.v_max = max_velocity
-        self.a_max = max_acceleration
+        self.acceleration = max_acceleration
 
         # State Variables
         self.current_joint_angles = np.array([0.0] * 6)
@@ -19,51 +19,109 @@ class KinematicModel:
         self.moving = False
         self.current_movement_start_time = 0.0
         self.current_movement_duration = 0.0
-        self.current_acceleration_durations = np.array([0.0] * 6)
+        self.angle_position_function = lambda x: np.array([0.0] * 6) # Return standard position always
+        self.angle_velocity_function = lambda x: np.array([0.0] * 6) # Return standard velocity always
 
         # Experiment variables
         self.start_time = 0.0
         self.stop_time = 0.0
 
-    def _determine_movement_duration_and_acceleration_duration(self, start_angles: list, end_angles: list) -> float:
+    def _determine_angle_position_function(self, x0: np.ndarray, v0: np.ndarray, xtarget: np.ndarray):
         # Determine angle differences
-        delta_x = np.abs(np.array(end_angles) - np.array(start_angles))
-        max_delta_index = np.argmax(delta_x)
-        max_delta_x = np.max(delta_x)
+        delta_x = xtarget - x0
 
-        # IDEAL CASE: t_acc <= T/3
-        # Determine acceleration time
-        t_acc = self.v_max / self.a_max
-        delta_x_acc = (self.v_max / 2) * t_acc
+        # Determine max delta_x
+        max_delta_index = np.argmax(np.abs(delta_x))
+        max_delta_x = delta_x[max_delta_index]
 
-        # Determine cruise time
-        t_cruise = (max_delta_x - 2 * delta_x_acc) / self.v_max
-        delta_x_cruise = self.v_max * t_cruise
+        v0_proj = v0[max_delta_index] * np.sign(max_delta_x) if max_delta_x != 0 else v0
+        
+        # Determine whether we are in trapezoidal or triangular velocity profile CASE
+        d_cruise = np.abs(max_delta_x) + v0_proj**2/(2*self.acceleration) - self.v_max**2 / self.acceleration
+        triangular_case = d_cruise <= 0
 
-        # Set IDEAL values
-        movement_duration = t_cruise + 2 * t_acc
-        max_acceleration_duration = t_acc
+        delta_t = -1
 
-        # NON-IDEAL CASE check: t_acc > T/3
-        if t_acc > t_cruise:
-            # NON-IDEAL CASE: t_acc > T/3
-            tau = np.sqrt(max_delta_x/(self.a_max))
-            v = self.a_max * tau
+        if triangular_case:
+            v_limit = np.sqrt(np.abs(max_delta_x) * self.acceleration + v0_proj**2/2)
+            delta_t = (2*v_limit - v0_proj)/self.acceleration
 
-            # Overwrite IDEAL values with NON-IDEAL values
-            movement_duration = 2*tau
-            max_acceleration_duration = tau
+        else: # trapezoidal case
+            t_cruise = d_cruise / self.v_max
+            delta_t = (2*self.v_max - v0_proj) / self.acceleration + t_cruise
 
-        acceleration_durations = np.zeros_like(self.current_joint_velocities)
-        acceleration_durations[max_delta_index] = max_acceleration_duration
-        # acceleration_coefficients = np.zeros_like(self.current_joint_velocities)
-        # acceleration_coefficients[max_delta_index] = self.a_max
+        abs_delta_x = np.abs(delta_x)
+        dir_x = np.sign(delta_x)
+        dir_x = np.where(dir_x == 0, 1, dir_x) # Prevent dropping initial velocity on 0-distance joints
+        v0_mag = np.abs(v0)
 
-        # Calculate the acceleration durations and acceleration coefficients of the rest of the joints to make sure they all finish the movement at the same time
-        max_joint_velocities = (movement_duration + np.sqrt(movement_duration**2 - 4 * delta_x / self.a_max)) / (2/self.a_max)
-        acceleration_durations = max_joint_velocities / self.a_max
+        # Calculate required v_limit magnitude for each joint to finish at exactly delta_t
+        a = -1/self.acceleration
+        b = delta_t - v0_mag/self.acceleration
+        c = -v0_mag**2/(2*self.acceleration) - abs_delta_x
+        d = b**2 - 4*a*c
 
-        return movement_duration, acceleration_durations
+        v_limit1 = (-b + np.sqrt(d))/(2*a)
+        v_limit2 = (-b - np.sqrt(d))/(2*a)
+        v_limit_mag = np.where(np.abs(v_limit1) < np.abs(v_limit2), v_limit1, v_limit2)
+
+        # 3. Time intervals (Now guaranteed positive)
+        t_acc = (v_limit_mag - v0_mag)/self.acceleration
+        t_dec = v_limit_mag/self.acceleration
+        t_cruise = delta_t - t_acc - t_dec
+
+        # 4. Displacements (FIXED: Replaced self.v_max with v_limit_mag)
+        d_acc = v0_mag * t_acc + (v_limit_mag - v0_mag)/2 * t_acc
+        d_cruise = v_limit_mag * t_cruise
+
+
+        # Position function
+        def x(t):
+            t1 = t - t_acc
+            t2 = t1 - t_cruise
+
+            conditions = [
+                t <= 0,
+                t <= t_acc,
+                t < delta_t - t_dec,
+                t < delta_t
+            ]
+
+            # Calculate magnitude shape
+            choices = [
+                0,
+                v0_mag * t + (self.acceleration * t**2)/2,
+                d_acc + v_limit_mag * t1,
+                d_acc + d_cruise + t2 * (v_limit_mag - t2*self.acceleration) + t2**2 * self.acceleration/2
+            ]
+
+            # 5. Apply directionality back to the final displacement
+            return x0 + dir_x * np.select(conditions, choices, default=abs_delta_x)
+
+        # Velocity function
+        def xderiv(t):
+            t1 = t - t_acc
+            t2 = t1 - t_cruise
+
+            conditions = [
+                t <= 0,
+                t <= t_acc,
+                t < delta_t - t_dec,
+                t < delta_t
+            ]
+
+            # Calculate magnitude shape
+            choices = [
+                0,
+                v0_mag + (self.acceleration * t),
+                v_limit_mag,
+                (v_limit_mag - 2*t2*self.acceleration) + t2 * self.acceleration
+            ]
+
+            # 5. Apply directionality back to the final displacement
+            return dir_x * np.select(conditions, choices, default=0.0)
+
+        return x, xderiv
 
 
     def fmi2Instantiate(self):
@@ -80,45 +138,23 @@ class KinematicModel:
     def fmi2SetCommandedJointAngles(self, angles: list):
         # Setup variables for move to be made
         self.commanded_joint_angles = np.array(angles)
-        self.current_movement_duration, self.current_acceleration_durations = self._determine_movement_duration_and_acceleration_duration(self.current_joint_angles, self.commanded_joint_angles)
 
     def fmi2StartMovement(self):
-        self.moving = True
+        # Save variables needed to calculate the new trajectory
+        self.start_joint_angles = self.current_joint_angles
+        self.start_joint_velocities = self.current_joint_velocities
         self.current_movement_start_time = self.time
-        # Capture the exact starting position for this movement
+
+        # Calculate the acc, cruise and deacc durations for the trajectory
+        self.angle_position_function, self.angle_velocity_function = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
+        self.moving = True
 
     def fmi2DoStep(self, current_time: float, step_size: float): 
         self.time = current_time + step_size
 
-        if self.moving:
-            t_rel = self.time - self.current_movement_start_time
-            
-            # Check if we have surpassed the total duration
-            if t_rel >= self.current_movement_duration:
-                self.current_joint_angles = self.commanded_joint_angles.copy()
-                self.current_joint_velocities = np.array([0.0] * 6)
-                self.moving = False
-            else: # Else keep on doing the movement
-                # Determine which joints are accelerating, cruising and decelerating
-                is_accelerating = t_rel <= self.current_acceleration_durations
-                is_decelerating = t_rel >= (self.current_movement_duration - self.current_acceleration_durations)
-                is_cruising = ~(is_accelerating | is_decelerating)
-
-                # Get acceleration/velocity sign
-                delta_angles = self.commanded_joint_angles - self.current_joint_angles
-                sign = delta_angles / (np.abs(delta_angles) + 1e-6)
-
-                # Update volicities based on masks from above
-                # Accelerating: add acceleration
-                self.current_joint_velocities[is_accelerating] += self.a_max * step_size * sign[is_accelerating]
-
-                # Decelerating: subtract acceleration
-                self.current_joint_velocities[is_decelerating] -= self.a_max * step_size * sign[is_decelerating]
-
-                # Cruising: (Implicitly does nothing, no code needed)
-
-                # Update positions based on the velocity of each joint
-                self.current_joint_angles += self.current_joint_velocities * step_size
+        t = self.time - self.current_movement_start_time
+        self.current_joint_angles = self.angle_position_function(t)
+        self.current_joint_velocities = self.angle_velocity_function(t)
 
     def fmi2GetJointPositions(self) -> list: 
         return self.current_joint_angles.copy().tolist()
