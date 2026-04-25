@@ -53,3 +53,10 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 docker build -f Dockerfile.base -t communication-base .
 
 docker compose up --build
+
+
+## GODOT LOCAL :: 
+
+export VENV_PATH=$(pwd)/venv/lib/python3.11/site-packages
+
+PYTHONPATH=$(pwd):$VENV_PATH godot --path DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/ World.tscn

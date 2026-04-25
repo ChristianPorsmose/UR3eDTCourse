@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import PhysicalTwinState, StuckJointStatus, InjectFault
+from communication.typed_protocol import LoadProgram, PhysicalTwinState, StuckJointStatus, InjectFault
 from communication.typed_protocol_client import TypedRabbitMQClient
 import queue
 
@@ -55,7 +55,7 @@ def main():
         typed_client.subscribe(
             InjectFault,
             lambda msg : print(msg),
-            "load_queue_debug"
+            queue_name="stuck_joint_inject"
         )
         threading.Thread(target=lambda: typed_publisher_loop(typed_client, publish_queue), daemon=True).start()
         threading.Thread(target=stuck_joints_loop, daemon=True).start()

@@ -16,9 +16,9 @@ def load_config(path: Path) -> dict:
     
 def typed_publisher_loop(typed_client : TypedRabbitMQClient, publish_queue : queue.Queue):
     while True:
-        msg = publish_queue.get()  
+        msg = publish_queue.get() 
         typed_client.client.connection.add_callback_threadsafe(
-            lambda m=msg: typed_client.publish(m)
+            partial(typed_client.publish, msg)
         )
 
 def publisher_loop(rabbit_mq: Rabbitmq, routing_key : str, publish_queue : queue.Queue):

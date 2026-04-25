@@ -20,7 +20,7 @@ class CtrlMsg:
 
 @dataclass
 class LoadProgram(CtrlMsg):
-    joint_positions: list[int]
+    joint_positions: list[float]
     max_velocity: float
     acceleration: float
     type : str  = "load_program"

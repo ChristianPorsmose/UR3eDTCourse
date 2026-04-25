@@ -7,7 +7,6 @@ from py4godot.classes.Node3D import Node3D
 # # Custom imports
 from communication import protocol
 from communication.rabbitmq import Rabbitmq
-from utils.utils import load_config
 from pathlib import Path
 import yaml
 import threading
@@ -23,9 +22,6 @@ class PTScript(Node3D):
 
 		# Queue for putting messages received from topic
 		self.message_queue = queue.Queue()
-
-		config_path = Path("communication/connect.yml")
-		self.connect_config = load_config(config_path)
 			
 		print("Config loaded. Starting RabbitMQ thread...")
 		
@@ -44,7 +40,7 @@ class PTScript(Node3D):
 
 	# 3. Move all the blocking RabbitMQ logic into this new function
 	def run_rabbitmq(self):
-		with Rabbitmq(**self.connect_config) as rabbit_mq:
+		with Rabbitmq(ip="localhost", port=5672, username="ur3e", password="ur3e", vhost="/", exchange="UR3E_AMQP", type="topic") as rabbit_mq:
 			rabbit_mq.subscribe(self.topic, self.on_message_received)
 			print("Listening for messages...")
 			rabbit_mq.start_consuming() # This loop now runs safely in the background!

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from communication.protocol import RobotArmStateKeys as rb
 from communication.protocol import Deviation as d
-from communication.protocol import ROUTING_KEY_DEVIATION, ROUTING_KEY_STATE, ROUTING_KEY_RT_MODEL_STATE
+from communication.protocol import ROUTING_KEY_DEVIATION, ROUTING_KEY_STATE, ROUTING_KEY_RT_MODEL_STATE, ROUTING_KEY_CTRL
 from utils.utils import interpolate, load_config, publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
@@ -41,6 +41,7 @@ def main():
         subscriptions = {
             (ROUTING_KEY_STATE, "abnormal_queue_1"): lambda x: latest_mock_queue.put(x),
             (ROUTING_KEY_RT_MODEL_STATE, "abnormal_queue_2"): lambda x: kinematic_queue.append(x),
+            (ROUTING_KEY_CTRL, "abnormal_queue_3"): lambda x: print(f"Received control message: {x}")
         }
 
         for (key, queue_name), func in subscriptions.items():

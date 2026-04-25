@@ -67,6 +67,7 @@ class Rabbitmq:
                                    body=encode_json(message),
                                    properties=properties
                                    )
+        print(f"Message sent to {routing_key}.", flush=True)
         self._l.debug(f"Message sent to {routing_key}.")
         self._l.debug(message)
 
@@ -74,6 +75,7 @@ class Rabbitmq:
         (method, properties, body) = self.channel.basic_get(queue=queue_name, auto_ack=True)
 
         self._l.debug(f"Received message is {body} {method} {properties}")
+        print(f"Received message is {body} {method} {properties}", flush=True)
         if body is not None:
             return decode_json(body)
         else:
