@@ -54,6 +54,7 @@ docker build -f Dockerfile.base -t communication-base .
 
 docker compose up --build
 
+(mosen : docker build --platform linux/amd64 -t communication-base2:latest -f Dockerfile.base .) 
 
 ## GODOT LOCAL :: 
 

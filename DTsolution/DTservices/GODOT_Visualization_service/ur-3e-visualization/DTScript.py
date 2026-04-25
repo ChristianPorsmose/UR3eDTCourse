@@ -20,6 +20,10 @@ class DTScript(Node3D):
 		
         # Queue for putting messages received from topic
         self.message_queue = queue.Queue()
+
+        config_path = Path("communication/connect.yml")
+        with open(config_path, 'r') as file:
+            self.connect_config = yaml.safe_load(file)
 			
         print("Config loaded. Starting RabbitMQ thread...")
 		
@@ -38,7 +42,7 @@ class DTScript(Node3D):
 
     # 3. Move all the blocking RabbitMQ logic into this new function
     def run_rabbitmq(self):
-        with Rabbitmq(ip="localhost", port=5672, username="ur3e", password="ur3e", vhost="/", exchange="UR3E_AMQP", type="topic") as rabbit_mq:
+        with Rabbitmq(**self.connect_config) as rabbit_mq:
             rabbit_mq.subscribe(self.topic, self.on_message_received)
             print("Listening for messages...")
             rabbit_mq.start_consuming() # This loop now runs safely in the background!
