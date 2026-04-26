@@ -102,6 +102,15 @@ services:
       - "6080:6080"
     depends_on:
       - mockup
+  inv_kinematics:
+    container_name: inv_kinematics
+    build:
+      context: .
+      dockerfile: DTsolution/DTservices/inv_kinematics/Dockerfile
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+    depends_on:
+      - stuck_joint
 
 networks:
   shared-communication:

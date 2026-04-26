@@ -116,3 +116,14 @@ class FilteredState(TimeStamped):
     @classmethod
     def routing_key(cls) -> str:
         return "filtered.state"
+
+@dataclass
+class LoadTCPProgram(TimeStamped):
+    tcp_position: list[float]
+    tcp_rotation: list[float]
+    max_velocity: float
+    acceleration: float
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "load_program.tcp"
