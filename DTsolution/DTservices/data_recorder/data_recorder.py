@@ -93,6 +93,32 @@ def write_ctrl_msg_to_influxdb(writer: WriterFn, ctrl_msg: dict):
 
     safe_write(writer, point, "Control message written successfully.")
 
+def write_stuck_joint_to_influxdb(writer: WriterFn, msg: dict):
+    try:
+        dp_flat = {}
+
+        # CHANGE 'stuck_mask' TO 'stuck_joints'
+        stuck_mask = list(msg["stuck_joints"]) 
+        joint_pos = list(msg["joint_positions"])
+
+        # Flatten stuck mask
+        for i, val in enumerate(stuck_mask):
+            dp_flat[f"stuck_joint_{i}"] = bool(val)
+
+        # Flatten joint positions
+        for i, val in enumerate(joint_pos):
+            dp_flat[f"joint_position_{i}"] = float(val)
+
+        dp_flat["any_stuck_joint"] = any(stuck_mask)
+        dp_flat["nr_stuck_joints"] = sum(stuck_mask)
+
+        point = create_point("stuck_joint_status", tags={"source": "stuck_joint_detector"})
+        point = add_fields(point, dp_flat)
+
+        safe_write(writer, point, "Stuck joint status written successfully.")
+    except Exception as e:
+        print(f"CRITICAL ERROR in write_stuck_joint_to_influxdb: {e}")
+
 def main():
     connect_config = load_config(Path("connect.yml"))
     influx_config = load_config(Path("influxdb.yml"))
@@ -104,12 +130,14 @@ def main():
         subscriptions = {
             protocol.ROUTING_KEY_STATE: write_datapoint_to_influxdb,
             protocol.ROUTING_KEY_CTRL: write_ctrl_msg_to_influxdb,
-            protocol.ROUTING_KEY_RT_MODEL_STATE: write_model_datapoint_to_influxdb
+            protocol.ROUTING_KEY_RT_MODEL_STATE: write_model_datapoint_to_influxdb,
+            protocol.ROUTING_KEY_STUCK_JOINT: write_stuck_joint_to_influxdb
         }
 
         for routing_key, func in subscriptions.items():
-            rabbit_mq.subscribe(routing_key, lambda ch, method, properties, body_json, f=func: f(writer, body_json))
-
+            rabbit_mq.subscribe(routing_key, 
+                                lambda ch, method, properties, body_json, f=func: f(writer, body_json))
+        
         rabbit_mq.start_consuming()
 
 
