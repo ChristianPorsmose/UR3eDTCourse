@@ -22,7 +22,7 @@ class KinematicModel:
         self.angle_position_function = lambda x: np.array([0.0] * 6) # Return standard position always
         self.angle_velocity_function = lambda x: np.array([0.0] * 6) # Return standard velocity always
 
-        # Experiment variables
+        # Experiment variabless
         self.start_time = 0.0
         self.stop_time = 0.0
 
@@ -34,51 +34,53 @@ class KinematicModel:
         max_delta_index = np.argmax(np.abs(delta_x))
         max_delta_x = delta_x[max_delta_index]
 
-        v0_proj = v0[max_delta_index] * np.sign(max_delta_x) if max_delta_x != 0 else v0
+        # Enforce scalars for projections
+        v0_proj = v0[max_delta_index] * np.sign(max_delta_x) if max_delta_x != 0 else 0.0
+        v0_mag = np.abs(v0_proj)
         
         # Determine whether we are in trapezoidal or triangular velocity profile CASE
         d_cruise = np.abs(max_delta_x) + v0_proj**2/(2*self.acceleration) - self.v_max**2 / self.acceleration
         triangular_case = d_cruise <= 0
 
         delta_t = -1
+        t_acc = -1
+        t_dec = -1
+        t_cruise = 0
 
         if triangular_case:
             v_limit = np.sqrt(np.abs(max_delta_x) * self.acceleration + v0_proj**2/2)
             delta_t = (2*v_limit - v0_proj)/self.acceleration
-
+            t_acc = (v_limit - v0_proj) / self.acceleration
+            t_dec = v_limit / self.acceleration
         else: # trapezoidal case
             t_cruise = d_cruise / self.v_max
             delta_t = (2*self.v_max - v0_proj) / self.acceleration + t_cruise
+            t_acc = (self.v_max - v0_proj) / self.acceleration
+            t_dec = self.v_max / self.acceleration
 
-        abs_delta_x = np.abs(delta_x)
-        dir_x = np.sign(delta_x)
-        dir_x = np.where(dir_x == 0, 1, dir_x) # Prevent dropping initial velocity on 0-distance joints
-        v0_mag = np.abs(v0)
-
-        # Calculate required v_limit magnitude for each joint to finish at exactly delta_t
-        a = -1/self.acceleration
-        b = delta_t - v0_mag/self.acceleration
-        c = -v0_mag**2/(2*self.acceleration) - abs_delta_x
-        d = b**2 - 4*a*c
-
-        v_limit1 = (-b + np.sqrt(d))/(2*a)
-        v_limit2 = (-b - np.sqrt(d))/(2*a)
-        v_limit_mag = np.where(np.abs(v_limit1) < np.abs(v_limit2), v_limit1, v_limit2)
-
-        # 3. Time intervals (Now guaranteed positive)
-        t_acc = (v_limit_mag - v0_mag)/self.acceleration
-        t_dec = v_limit_mag/self.acceleration
-        t_cruise = delta_t - t_acc - t_dec
-
-        # 4. Displacements (FIXED: Replaced self.v_max with v_limit_mag)
-        d_acc = v0_mag * t_acc + (v_limit_mag - v0_mag)/2 * t_acc
-        d_cruise = v_limit_mag * t_cruise
-
+        # Avoid 0/0 division. Mathematically, a_lim_i always resolves to self.acceleration anyway.
+        denominator = t_dec - t_acc
+        a_lim_i = v0_proj / denominator if denominator != 0 else self.acceleration
+        
+        v_lim_i = a_lim_i * t_dec
+        v_lim_i_mag = np.abs(v_lim_i)
+        
+        # Proportional scaling so all joints finish exactly at the same time
+        dir_x = delta_x / np.abs(max_delta_x) if max_delta_x != 0 else np.zeros_like(delta_x)
 
         # Position function
         def x(t):
             t1 = t - t_acc
             t2 = t1 - t_cruise
+
+            def d_acc(t):
+                return v0_mag * t + (self.acceleration * t**2)/2
+            
+            def d_cruise(t):
+                return v_lim_i_mag * t
+
+            def d_dec(t):
+                return t * (v_lim_i_mag - t*self.acceleration) + t**2 * self.acceleration/2
 
             conditions = [
                 t <= 0,
@@ -89,14 +91,17 @@ class KinematicModel:
 
             # Calculate magnitude shape
             choices = [
-                0,
-                v0_mag * t + (self.acceleration * t**2)/2,
-                d_acc + v_limit_mag * t1,
-                d_acc + d_cruise + t2 * (v_limit_mag - t2*self.acceleration) + t2**2 * self.acceleration/2
+                0.0,
+                d_acc(t),
+                d_acc(t_acc) + d_cruise(t1),
+                d_acc(t_acc) + d_cruise(t_cruise) + d_dec(t2)
             ]
 
-            # 5. Apply directionality back to the final displacement
-            return x0 + dir_x * np.select(conditions, choices, default=abs_delta_x)
+            if d_cruise(t1) >= 0 and t > t_acc:
+                print(d_cruise(t1), t1, t, t_cruise)
+
+            # Apply directionality back to the final displacement
+            return x0 + dir_x * np.select(conditions, choices, default=np.abs(max_delta_x))
 
         # Velocity function
         def xderiv(t):
@@ -110,15 +115,15 @@ class KinematicModel:
                 t < delta_t
             ]
 
-            # Calculate magnitude shape
+            # Calculate magnitude shape for the velocity profile
             choices = [
-                0,
-                v0_mag + (self.acceleration * t),
-                v_limit_mag,
-                (v_limit_mag - 2*t2*self.acceleration) + t2 * self.acceleration
+                0.0,
+                v0_mag + self.acceleration * t,    
+                v_lim_i_mag,                       
+                v_lim_i_mag - self.acceleration * t2 
             ]
 
-            # 5. Apply directionality back to the final displacement
+            # Apply directionality back to the velocity
             return dir_x * np.select(conditions, choices, default=0.0)
 
         return x, xderiv

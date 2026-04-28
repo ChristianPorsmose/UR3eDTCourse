@@ -12,7 +12,7 @@ model_lock = threading.Lock()
 def inject_ctrl_msg_to_model(model : KinematicModel, body : dict):
     with model_lock:
         if body["type"] == "load_program":
-            model.fmi2SetCommandedJointAngles(body["joint_positions"][0])
+            model.fmi2SetCommandedJointAngles(body["joint_positions"])
         elif body["type"] == "play":
             model.fmi2StartMovement()
     
