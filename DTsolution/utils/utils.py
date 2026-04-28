@@ -1,6 +1,7 @@
 
 from functools import partial
 from pathlib import Path
+from typing import Any, Callable, Iterable, TypeVar
 import numpy as np
 import yaml
 import queue
@@ -8,6 +9,7 @@ from scipy.interpolate import interp1d
 from communication.rabbitmq import Rabbitmq 
 from communication.protocol import RobotArmStateKeys as rb
 from communication.typed_protocol_client import TypedRabbitMQClient
+from communication.typed_protocol import TimeStamped
 
 
 def load_config(path: Path) -> dict:
@@ -31,13 +33,16 @@ def publisher_loop(rabbit_mq: Rabbitmq, routing_key : str, publish_queue : queue
             lambda m=msg: publish(message=m)
         )
 
-def interpolate(target_time: float, data: list[dict], value_key: str):
+TS = TypeVar("TS", bound="TimeStamped")
+
+def interpolate(target_time: float, data: Iterable[TS], field_selector: Callable[[TS], Any]):
     if len(data) < 2:
         return None
     sorted_data = sorted(data, key=lambda d: d[rb.TIMESTAMP])
 
-    times = np.array([d[rb.TIMESTAMP] for d in sorted_data])
-    values = np.array([d[value_key] for d in sorted_data])
+    times = np.array([d.timestamp for d in sorted_data])
+    values = np.array([field_selector(d) for d in sorted_data])
+    
     f = interp1d(
         times,
         values,

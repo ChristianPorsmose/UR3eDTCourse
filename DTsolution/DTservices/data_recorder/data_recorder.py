@@ -87,7 +87,6 @@ def write_ctrl_msg_to_influxdb(writer: WriterFn, ctrl_msg: dict):
             "max_velocity": ctrl_msg["max_velocity"],
             "acceleration": ctrl_msg["acceleration"]
         }
-        ctrl_msg["joint_positions"] = ctrl_msg["joint_positions"]
         flatten_array_and_add(ctrl_msg, fields, "joint_positions")
         point = add_fields(point, fields)
 
