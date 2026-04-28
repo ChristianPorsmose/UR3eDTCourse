@@ -80,7 +80,7 @@ class BreakableRobot:
 
         if publish:
             self.rabbit_mq_client.publish(
-                LoadProgram(joint_positions=[full_q.tolist()], max_velocity=60, acceleration=80)
+                LoadProgram(joint_positions=full_q.tolist(), max_velocity=60, acceleration=80)
             )
             self.rabbit_mq_client.publish(
                 Play()

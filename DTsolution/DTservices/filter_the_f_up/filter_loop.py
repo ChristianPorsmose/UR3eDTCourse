@@ -1,18 +1,20 @@
 from collections import deque
+from dataclasses import asdict
 import threading
 import numpy as np
 from pathlib import Path
-
-from communication.protocol import ROUTING_KEY_STATE
 from communication.protocol import RobotArmStateKeys as rb
-from utils.utils import load_config, publisher_loop
-from communication.rabbitmq import ROUTING_KEY_FILTERED_STATE, Rabbitmq
+from communication.typed_protocol import FilteredState, PhysicalTwinState
+from communication.typed_protocol_client import TypedRabbitMQClient
+from utils.utils import load_config, publisher_loop, typed_publisher_loop
+from communication.rabbitmq import Rabbitmq
 import queue
 from ParticleFilter import ParticleFilter
 
-consumer_queue = queue.Queue()
+
+consumer_queue : queue.Queue[PhysicalTwinState] = queue.Queue()
 kinematic_queue = deque(maxlen=20)
-publish_queue = queue.Queue()
+publish_queue : queue.Queue[FilteredState] = queue.Queue()
 
 PROCESS_NOISE_STD = 6.310483282548284e-06  # TODO : estimate
 MEASUREMENT_NOISE_STD = 6.310483282548284e-06 # TODO : estimate
@@ -22,9 +24,9 @@ pf = ParticleFilter(num_particles=1000, process_noise_std=PROCESS_NOISE_STD, mea
 def filter_loop():
     while True:
         newest_state = consumer_queue.get()
-        timestamp = newest_state[rb.TIMESTAMP]
-        state_pos = np.array(newest_state[rb.Q_ACTUAL])
-        state_vel = np.array(newest_state[rb.QD_ACTUAL])
+        timestamp = newest_state.timestamp
+        state_pos = np.array(newest_state.q_actual)
+        state_vel = np.array(newest_state.qd_actual)
 
         if not pf.is_initialized:
             pf.initialize(state_pos, state_vel, timestamp)
@@ -41,26 +43,27 @@ def filter_loop():
         pf.resample()
 
         pos_est, vel_est = pf.estimate()
-        msg = {
-            rb.TIMESTAMP: timestamp,
-            rb.Q_ACTUAL: pos_est.tolist(),
-            rb.QD_ACTUAL: vel_est.tolist()
-        }
-        publish_queue.put(msg)
-        
+
+        publish_queue.put(
+            FilteredState(
+            **asdict(newest_state),
+            q_actual=pos_est.tolist(),
+            qd_actual=vel_est.tolist()
+        )
+        )       
 
 def main():
     config = load_config(Path("connect.yml"))
     print("STARTING PARTICLE FILTER")
-    with Rabbitmq(**config) as rabbit_mq:
-        rabbit_mq.subscribe(
-                ROUTING_KEY_STATE,
-                lambda _, __, ___, body : consumer_queue.put(body),
+    with TypedRabbitMQClient(Rabbitmq(**config)) as typed_client:
+        typed_client.subscribe(
+                PhysicalTwinState,
+                lambda msg : consumer_queue.put(msg),
                 queue_name="filter_queue"
             )
-        threading.Thread(target=lambda: publisher_loop(rabbit_mq, ROUTING_KEY_FILTERED_STATE, publish_queue), daemon=True).start()
+        threading.Thread(target=lambda: typed_publisher_loop(typed_client, publish_queue), daemon=True).start()
         threading.Thread(target=filter_loop, daemon=True).start()
-        rabbit_mq.start_consuming()
+        typed_client.client.start_consuming()
 
 if __name__ == "__main__":
     main()

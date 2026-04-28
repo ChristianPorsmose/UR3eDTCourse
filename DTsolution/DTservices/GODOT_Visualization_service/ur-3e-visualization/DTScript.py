@@ -5,7 +5,7 @@ from py4godot.classes.core import Vector3
 from py4godot.classes.Node3D import Node3D
 
 # # Custom imports
-from communication.rabbitmq import Rabbitmq
+from communication.rabbitmq import Rabbitmq, ROUTING_KEY_RT_MODEL_STATE
 from pathlib import Path
 import yaml
 import threading
@@ -16,12 +16,12 @@ import queue
 class DTScript(Node3D):
     def _ready(self):
         # Topic to subscribe to
-        self.topic = "rt_model.dt.state"
+        self.topic = ROUTING_KEY_RT_MODEL_STATE
 		
         # Queue for putting messages received from topic
         self.message_queue = queue.Queue()
 
-        config_path = Path("communication/connect.yml")
+        config_path = Path("connect_local.yml")
         with open(config_path, 'r') as file:
             self.connect_config = yaml.safe_load(file)
 			
@@ -35,7 +35,6 @@ class DTScript(Node3D):
     def _process(self, delta: float):
         while not self.message_queue.empty():
             body = self.message_queue.get()
-            print(f"Godot received: {body}")
             for i in range(1, 7):
                 angle = body["q_actual"][i-1]
                 self.apply_rotation(angle, i)
@@ -43,7 +42,7 @@ class DTScript(Node3D):
     # 3. Move all the blocking RabbitMQ logic into this new function
     def run_rabbitmq(self):
         with Rabbitmq(**self.connect_config) as rabbit_mq:
-            rabbit_mq.subscribe(self.topic, self.on_message_received)
+            rabbit_mq.subscribe(self.topic, self.on_message_received, "short_name_hehehehhe")
             print("Listening for messages...")
             rabbit_mq.start_consuming() # This loop now runs safely in the background!
 

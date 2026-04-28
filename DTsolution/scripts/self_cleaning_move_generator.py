@@ -45,7 +45,7 @@ def main():
         while True:
             time.sleep(30)
             enqueue_program(scale=4*np.pi)
-            inject_stuck_joints()
+            #inject_stuck_joints()
             print("Enqueued new program")
 
 if __name__ == "__main__":

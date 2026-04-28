@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Protocol, TypeVar, runtime_checkable, Union
 from datetime import datetime, UTC
 
@@ -46,7 +46,6 @@ class Wear:
     def id(self) -> str:
         return "wear"
 
-
 @dataclass
 class StuckJoint:
     joints: list[int]
@@ -55,16 +54,14 @@ class StuckJoint:
     def id(self) -> str:
         return "stuck_joint"
 
-
 @dataclass
 class InjectFault(CtrlMsg):
-    fault_type: Union[Wear, StuckJoint]
     type : str = "inject_fault"
 
 @dataclass(kw_only=True)
 class TimeStamped:
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
+    timestamp: float = field(
+        default_factory=lambda: datetime.now(UTC).timestamp()
     )
 
 @dataclass
@@ -88,6 +85,12 @@ class KinematicModelState(RobotStateMessage):
     @classmethod
     def routing_key(cls) -> str:
         return "rt_model.dt.state"
+    
+@dataclass
+class FilteredState(RobotStateMessage):
+    @classmethod
+    def routing_key(cls) -> str:
+        return "filtered.state"
 
 @dataclass
 class Deviation(TimeStamped):
@@ -107,15 +110,6 @@ class StuckJointStatus(TimeStamped):
     def routing_key(cls) -> str:
         return "stuck_joint.status"
 
-
-@dataclass
-class FilteredState(TimeStamped):
-    q_filtered: list[float]
-    qd_filtered: list[float]
-
-    @classmethod
-    def routing_key(cls) -> str:
-        return "filtered.state"
 
 @dataclass
 class LoadTCPProgram(TimeStamped):
