@@ -3,10 +3,9 @@ from dataclasses import asdict
 import threading
 import numpy as np
 from pathlib import Path
-from communication.protocol import RobotArmStateKeys as rb
 from communication.typed_protocol import FilteredState, PhysicalTwinState
 from communication.typed_protocol_client import TypedRabbitMQClient
-from utils.utils import load_config, publisher_loop, typed_publisher_loop
+from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
 from ParticleFilter import ParticleFilter
