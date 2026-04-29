@@ -147,26 +147,6 @@ services:
     command: python -u inv_kinematics.py
     depends_on:
       - stuck_joint
-  
-  
-
-  # grafana:
-  #   container_name: grafana-visualizer
-  #   image: grafana/grafana:latest
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - GF_SECURITY_ADMIN_USER=ur3e
-  #     - GF_SECURITY_ADMIN_PASSWORD=ur3epassword
-  #   volumes:
-  #     - grafana-data:/var/lib/grafana:rw
-  #   depends_on:
-  #     - influxdb
-  #     - rt_robot_prediction
-
-
-
 volumes:
   db-data:
   grafana-data:
