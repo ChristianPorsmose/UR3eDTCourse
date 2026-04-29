@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import FilteredState, LoadProgram, StuckJointStatus, InjectFault
+from communication.typed_protocol import FilteredState, LoadProgram, StuckJointStatus, InjectStuckJoint
 from communication.typed_protocol_client import TypedRabbitMQClient
 from communication.typed_protocol import PhysicalTwinState 
 import queue
@@ -37,6 +37,7 @@ def stuck_joint_loop():
         stuck_mask : np.ndarray = constant_mask & (deviation > DEV_EPS)
 
         if np.any(stuck_mask):
+            print("DEBUG : STUCK  JOINT INCOMMING")
             publish_queue.put(
                 StuckJointStatus(
                     stuck_mask.tolist(),
@@ -56,7 +57,7 @@ def main():
         )
 
         typed_client.subscribe(
-            InjectFault,
+            InjectStuckJoint,
             lambda msg : print(f"FAULT RECEIVED: {msg}"),
             queue_name="stuck_joint_inject"
         )
@@ -65,5 +66,6 @@ def main():
         threading.Thread(target=stuck_joint_loop, daemon=True).start()
         
         typed_client.client.start_consuming()
+        
 if __name__ == "__main__":
     main()
