@@ -89,9 +89,9 @@ class BreakableRobot:
         return full_q
 
     def update_state(self, body: StuckJointStatus):
-        self.stuck_joints = np.array(body.stuck_joints)[0]
-        self.joint_positions = np.array(body.stuck_joints)
-        self.ur3e = self.init_ur3e()
+            self.stuck_joints = body.stuck_joints 
+            self.joint_angles = body.joint_positions 
+            self.ur3e = self.init_ur3e()
 
 def main():
     # Load config
