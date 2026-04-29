@@ -111,13 +111,13 @@ services:
       - mockup
   grafana:
     container_name: grafana-visualizer
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.3
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=ur3e
-      - GF_SECURITY_ADMIN_PASSWORD=ur3epassword
+      - GF_SECURITY_ADMIN_PASSWORD=ur3eur3e
     volumes:
       - grafana-data:/var/lib/grafana:rw
       - ./DTsolution/DTservices/Grafana/Dashboards:/var/lib/grafana/dashboards

@@ -11,6 +11,8 @@ RUN poetry config virtualenvs.create false
 
 FROM base-setup AS dependency-builder
 
+RUN touch README.md
+
 COPY pyproject.toml poetry.lock* ./
 
 RUN poetry install --no-root --no-interaction --no-ansi
