@@ -73,6 +73,31 @@ services:
       - ./communication/connect.yml:/app/connect.yml:rw
     depends_on:
       - mockup
+  grafana:
+    container_name: grafana-visualizer
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=ur3e
+      - GF_SECURITY_ADMIN_PASSWORD=ur3epassword
+    volumes:
+      - grafana-data:/var/lib/grafana:rw
+    depends_on:
+      - influxdb
+      - rt_robot_prediction
+  godot:
+    container_name: godot
+    build: 
+      context: .
+      dockerfile: ${DOCKERFILE2:-DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/Dockerfile.x86}
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+    ports:
+      - "6080:6080"
+    depends_on:
+      - mockup
   rt_robot_prediction:
     container_name: robot_prediction
     build: 
@@ -89,17 +114,6 @@ services:
       dockerfile: DTsolution/scripts/Dockerfile
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-    depends_on:
-      - mockup
-  godot:
-    container_name: godot
-    build: 
-      context: .
-      dockerfile: ${DOCKERFILE2:-DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/Dockerfile.x86}
-    volumes:
-      - ./communication/connect.yml:/app/connect.yml:rw
-    ports:
-      - "6080:6080"
     depends_on:
       - mockup
   inv_kinematics:

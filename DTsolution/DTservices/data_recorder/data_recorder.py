@@ -1,4 +1,4 @@
-from dataclasses import fields, is_dataclass
+from dataclasses import fields
 from datetime import datetime, timezone
 from functools import partial
 from typing import Callable, Any
