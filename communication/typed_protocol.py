@@ -37,26 +37,21 @@ class Pause(CtrlMsg):
 class Stop(CtrlMsg):
     type : str = "stop"
 
-@dataclass
-class Wear:
-    duration: float
-    joints: list[int]
-
-    @property
-    def id(self) -> str:
-        return "wear"
-
-@dataclass
-class StuckJoint:
-    joints: list[int]
-
-    @property
-    def id(self) -> str:
-        return "stuck_joint"
-
-@dataclass
+@dataclass(kw_only=True)
 class InjectFault(CtrlMsg):
     type : str = "inject_fault"
+
+@dataclass
+class InjectWear(InjectFault):
+    duration: float
+    joints: list[int]
+    fault_type: str = "wear"
+
+@dataclass
+class InjectStuckJoint(InjectFault):
+    joints: list[int]
+    fault_type: str = "stuck_joint"
+
 
 @dataclass(kw_only=True)
 class TimeStamped:

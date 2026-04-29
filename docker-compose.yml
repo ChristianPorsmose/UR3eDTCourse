@@ -1,3 +1,8 @@
+x-base-build: &base-build
+  context: .
+  dockerfile: Dockerfile.base
+  target: service
+
 services:
   influxdb:
     container_name: influxdb-server
@@ -8,11 +13,12 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
       DOCKER_INFLUXDB_INIT_ORG: ur3e
       DOCKER_INFLUXDB_INIT_BUCKET: ur3e
-      #DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
     volumes:
       - db-data:/var/lib/influxdb:rw
     ports:
       - 8086:8086
+
   rabbitmq:
     container_name: rabbitmq-server
     image: rabbitmq:3.12-management
@@ -33,6 +39,7 @@ services:
       timeout: 5s
       retries: 20
       start_period: 15s
+
   mockup:
     container_name: ur3e_mockup
     build:
@@ -44,51 +51,62 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
   data_recorder:
     container_name: data_recorder
     build: 
-      context: .
-      dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
+      - ./DTsolution/DTservices/data_recorder/data_recorder.py:/app/data_recorder.py
+    command: python -u data_recorder.py
     depends_on:
       - influxdb
       - mockup
+
   abnormal_movement:
     container_name: abnormal_movement
     build: 
-      context: .
-      dockerfile: DTsolution/DTservices/abnormal_movement/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/abnormal_movement/abnormal_movement.py:/app/abnormal_movement.py
+    command: python -u abnormal_movement.py
     depends_on:
       - mockup
+
   stuck_joint:
     container_name: stuck_joint
     build: 
-      context: .
-      dockerfile: DTsolution/DTservices/stuck_joint_detection/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/stuck_joint_detection/stuck_joint.py:/app/stuck_joint.py
+    command: python -u stuck_joint.py
     depends_on:
       - mockup
+
   rt_robot_prediction:
     container_name: robot_prediction
     build: 
-      context: .
-      dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/models:/app/DTsolution/models
+      - ./DTsolution/DTservices/RT_robot_prediction/prediction.py:/app/prediction.py
+    command: python -u prediction.py
     depends_on:
       - mockup
+
   robot_ctrl:
     container_name: robot_ctrl
     build: 
-      context: .
-      dockerfile: DTsolution/scripts/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/scripts/robot_ctrl.py:/app/robot_ctrl.py
+    command: python -u robot_ctrl.py
     depends_on:
       - mockup
   grafana:
@@ -122,15 +140,32 @@ services:
   inv_kinematics:
     container_name: inv_kinematics
     build:
-      context: .
-      dockerfile: DTsolution/DTservices/inv_kinematics/Dockerfile
+      <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/inv_kinematics/inv_kinematics.py:/app/inv_kinematics.py
+    command: python -u inv_kinematics.py
     depends_on:
       - stuck_joint
+  
+  
 
-networks:
-  shared-communication:
+  # grafana:
+  #   container_name: grafana-visualizer
+  #   image: grafana/grafana:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=ur3e
+  #     - GF_SECURITY_ADMIN_PASSWORD=ur3epassword
+  #   volumes:
+  #     - grafana-data:/var/lib/grafana:rw
+  #   depends_on:
+  #     - influxdb
+  #     - rt_robot_prediction
+
+
 
 volumes:
   db-data:

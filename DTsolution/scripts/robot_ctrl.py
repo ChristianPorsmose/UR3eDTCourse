@@ -3,7 +3,7 @@ import time
 import numpy as np
 from pathlib import Path
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import LoadProgram, Play, MsgProtocol, InjectFault, StuckJoint
+from communication.typed_protocol import LoadProgram, Play, MsgProtocol, InjectStuckJoint
 from communication.typed_protocol_client import TypedRabbitMQClient
 from utils.utils import load_config
 import queue
@@ -20,11 +20,7 @@ def create_random_program(scale: float = 0.5*np.pi, vel: float = 60, acc: float 
 
 def inject_stuck_joints():
     control_queue.put(
-        InjectFault(
-            StuckJoint(
-                [0, 1, 2]
-            )
-        )
+        InjectStuckJoint([0,1,2])
     )
 
 def enqueue_program(scale: float = 0.5*np.pi):
@@ -45,7 +41,7 @@ def main():
         while True:
             time.sleep(30)
             enqueue_program(scale=4*np.pi)
-            #inject_stuck_joints()
+            inject_stuck_joints()
             print("Enqueued new program")
 
 if __name__ == "__main__":

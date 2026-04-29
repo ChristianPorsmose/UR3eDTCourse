@@ -24,13 +24,16 @@ class TypedRabbitMQClient:
     ):
         def handler(_, __, ___, body):
             if issubclass(msg_type, CtrlMsg):
-                if body.get("type") == msg_type.type:
-                    msg = msg_type(**body)
-                    callback(msg)
-                return 
-            
-            msg = msg_type(**body)
-            callback(msg)
+                if body.get("type") != msg_type.type:
+                    return 
+                expected_fault = getattr(msg_type, "fault_type", None)
+                if expected_fault and body.get("fault_type") != expected_fault:
+                    return
+            try:
+                msg = msg_type(**body)
+                callback(msg)
+            except TypeError as e:
+                print(f"Failed to parse {msg_type.__name__}: {e}")
 
         self.client.subscribe(
             msg_type.routing_key(),

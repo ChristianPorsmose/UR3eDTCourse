@@ -1,143 +1,90 @@
-from pathlib import Path
+from dataclasses import fields
 from datetime import datetime, timezone
 from functools import partial
 from typing import Callable, Any
 
-from communication import protocol
-from communication.rabbitmq import Rabbitmq
+from pathlib import Path
+
 from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import ASYNCHRONOUS,SYNCHRONOUS, WriteApi, PointSettings
+from influxdb_client.client.write_api import ASYNCHRONOUS, WriteApi
+
 from utils.utils import load_config
+from communication.rabbitmq import Rabbitmq
+from communication.typed_protocol import (
+    PhysicalTwinState,
+    LoadProgram,
+    KinematicModelState,
+    StuckJointStatus,
+    MsgProtocol
+)
+from communication.typed_protocol_client import TypedRabbitMQClient
+
 
 WriterFn = Callable[[Point], Any]
-CallbackFn = Callable[[WriterFn, dict], None]
 
 
-def flatten_array_and_add(dp: dict, dp_flat: dict, field: str):
-    for i, val in enumerate(dp[field]):
-        dp_flat[f"{field}_joint_{i}"] = val
+def add_field(point: Point, key: str, value: Any) -> Point:
+    if value is None:
+        return point
+
+    if isinstance(value, list):
+        for i, v in enumerate(value):
+            point = point.field(f"{key}_{i}", v)
+        return point
+
+    if isinstance(value, (int, float, str, bool)):
+        return point.field(key, value)
+
+    return point.field(key, str(value))
 
 
-def create_point(measurement: str, tags: dict | None = None) -> Point:
-    point = Point(measurement).time(datetime.now(timezone.utc))
-    if tags:
-        for k, v in tags.items():
-            point = point.tag(k, v)
-    return point
+def write_dataclass(writer: WriterFn, dp: MsgProtocol) -> None:
+    point = (
+        Point(dp.routing_key())
+        .time(datetime.now(timezone.utc))
+        .tag("msg_type", type(dp).__name__)
+    )
 
+    for f in fields(dp):
+        value = getattr(dp, f.name)
+        point = add_field(point, f.name, value)
 
-def add_fields(point: Point, fields: dict) -> Point:
-    for key, value in fields.items():
-        point = point.field(key, value)
-    return point
+    writer(record=point)
 
-
-def safe_write(writer: WriterFn, point: Point, success_msg: str):
-    try:
-        writer(record=point)
-        print(success_msg)
-    except Exception as e:
-        print(f"FAILED to write to InfluxDB: {e}")
-
-def write_model_datapoint_to_influxdb(writer: WriterFn, dp: dict):
-    dp_flat = {
-        "robot_mode": dp["robot_mode"],
-        "joint_max_speed": float(dp["joint_max_speed"]),
-        "joint_max_acceleration": float(dp["joint_max_acceleration"]),
-        "timestamp": dp["timestamp"]
-    }
-
-    for field in ["q_actual", "qd_actual", "q_target", "tcp_pose"]:
-        flatten_array_and_add(dp, dp_flat, field)
-    msg_source = dp.get("source", "dt_model")  # Default to "pt_mockup" if source is not provided becase the mockup doest have a have a key name for source
-    point = create_point("dt_model_Data", tags={"source": msg_source})
-    point = add_fields(point, dp_flat)
-
-    safe_write(writer, point, f"Data point from {msg_source} written successfully.")
-
-
-def write_datapoint_to_influxdb(writer: WriterFn, dp: dict):
-    dp_flat = {
-        "robot_mode": dp["robot_mode"],
-        "joint_max_speed": float(dp["joint_max_speed"]),
-        "joint_max_acceleration": float(dp["joint_max_acceleration"]),
-        "timestamp": dp["timestamp"]
-    }
-
-    for field in ["q_actual", "qd_actual", "q_target", "tcp_pose"]:
-        flatten_array_and_add(dp, dp_flat, field)
-    msg_source = dp.get("source", "pt_mockup")  # Default to "pt_mockup" if source is not provided becase the mockup doest have a have a key name for source
-    point = create_point("sensor_data", tags={"source": msg_source})
-    point = add_fields(point, dp_flat)
-
-    safe_write(writer, point, f"Data point from {msg_source} written successfully.")
-
-
-def write_ctrl_msg_to_influxdb(writer: WriterFn, ctrl_msg: dict):
-    if ctrl_msg["type"] not in ["load_program", "play"]:
-        return
-
-    point = create_point("ctrl_msgs", tags={
-        "source": "data_recorder_service",
-        "msg_type": ctrl_msg["type"]
-    }).field("msg_type", ctrl_msg["type"])
-
-    if ctrl_msg["type"] == "load_program":
-        fields = {
-            "max_velocity": ctrl_msg["max_velocity"],
-            "acceleration": ctrl_msg["acceleration"]
-        }
-        flatten_array_and_add(ctrl_msg, fields, "joint_positions")
-        point = add_fields(point, fields)
-
-    safe_write(writer, point, "Control message written successfully.")
-
-def write_stuck_joint_to_influxdb(writer: WriterFn, msg: dict):
-    try:
-        dp_flat = {}
-
-        # CHANGE 'stuck_mask' TO 'stuck_joints'
-        stuck_mask = list(msg["stuck_joints"]) 
-        joint_pos = list(msg["joint_positions"])
-
-        # Flatten stuck mask
-        for i, val in enumerate(stuck_mask):
-            dp_flat[f"stuck_joint_{i}"] = bool(val)
-
-        # Flatten joint positions
-        for i, val in enumerate(joint_pos):
-            dp_flat[f"joint_position_{i}"] = float(val)
-
-        dp_flat["any_stuck_joint"] = any(stuck_mask)
-        dp_flat["nr_stuck_joints"] = sum(stuck_mask)
-
-        point = create_point("stuck_joint_status", tags={"source": "stuck_joint_detector"})
-        point = add_fields(point, dp_flat)
-
-        safe_write(writer, point, "Stuck joint status written successfully.")
-    except Exception as e:
-        print(f"CRITICAL ERROR in write_stuck_joint_to_influxdb: {e}")
 
 def main():
     connect_config = load_config(Path("connect.yml"))
     influx_config = load_config(Path("influxdb.yml"))
 
-    with Rabbitmq(**connect_config) as rabbit_mq, InfluxDBClient(**influx_config) as client:
-        write_api: WriteApi = client.write_api(write_options=ASYNCHRONOUS)
-        writer = partial(write_api.write, bucket=influx_config["bucket"], org=influx_config["org"])
+    with (
+        TypedRabbitMQClient(Rabbitmq(**connect_config)) as typed_client,
+        InfluxDBClient(**influx_config) as client
+    ):
+        write_api: WriteApi = client.write_api(
+            write_options=ASYNCHRONOUS
+        )
+
+        writer = partial(
+            write_api.write,
+            bucket=influx_config["bucket"],
+            org=influx_config["org"]
+        )
 
         subscriptions = {
-            protocol.ROUTING_KEY_STATE: write_datapoint_to_influxdb,
-            protocol.ROUTING_KEY_CTRL: write_ctrl_msg_to_influxdb,
-            protocol.ROUTING_KEY_RT_MODEL_STATE: write_model_datapoint_to_influxdb,
-            protocol.ROUTING_KEY_STUCK_JOINT: write_stuck_joint_to_influxdb
+            PhysicalTwinState: write_dataclass,
+            KinematicModelState: write_dataclass,
+            StuckJointStatus: write_dataclass,
+            LoadProgram: write_dataclass,
         }
 
-        for routing_key, func in subscriptions.items():
-            rabbit_mq.subscribe(routing_key, 
-                                lambda ch, method, properties, body_json, f=func: f(writer, body_json))
-        
-        rabbit_mq.start_consuming()
+        for msg_type, handler in subscriptions.items():
+            typed_client.subscribe(
+                msg_type,
+                lambda msg, h=handler: h(writer, msg),
+                queue_name=msg_type.__name__
+            )
+
+        typed_client.client.start_consuming()
 
 
 if __name__ == "__main__":
