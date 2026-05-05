@@ -1,7 +1,7 @@
 from dataclasses import fields
 from datetime import datetime, timezone
 from functools import partial
-from typing import Callable, Any
+from typing import Callable, Any, TypeAlias
 
 from pathlib import Path
 
@@ -15,12 +15,13 @@ from communication.typed_protocol import (
     LoadProgram,
     KinematicModelState,
     StuckJointStatus,
+    FilteredState,
     MsgProtocol
 )
 from communication.typed_protocol_client import TypedRabbitMQClient
 
 
-WriterFn = Callable[[Point], Any]
+WriterFn : TypeAlias = Callable[[Point], Any]
 
 
 def add_field(point: Point, key: str, value: Any) -> Point:
@@ -75,6 +76,7 @@ def main():
             KinematicModelState: write_dataclass,
             StuckJointStatus: write_dataclass,
             LoadProgram: write_dataclass,
+            FilteredState: write_dataclass,
         }
 
         for msg_type, handler in subscriptions.items():

@@ -101,12 +101,24 @@ services:
 
   robot_ctrl:
     container_name: robot_ctrl
-    build: 
+    build:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/scripts/robot_ctrl.py:/app/robot_ctrl.py
     command: python -u robot_ctrl.py
+    depends_on:
+      - mockup
+
+  particle_filter:
+    container_name: particle_filter
+    build:
+      <<: *base-build
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/filter_the_f_up/ParticleFilter.py:/app/ParticleFilter.py
+      - ./DTsolution/DTservices/filter_the_f_up/filter_loop.py:/app/filter_loop.py
+    command: python -u filter_loop.py
     depends_on:
       - mockup
   grafana:
