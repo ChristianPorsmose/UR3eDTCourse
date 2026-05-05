@@ -24,7 +24,7 @@ def deviation_loop():
         if not np.any(np.abs(deviation) > EPSILON):
             continue
         publish_queue.put(Deviation(joint_deviations=deviation.tolist()))
-
+ 
 
 def main():
     config = load_config(Path("connect.yml"))
@@ -42,7 +42,6 @@ def main():
         threading.Thread(target=lambda: typed_publisher_loop(typed_client, publish_queue), daemon=True).start()
 
         typed_client.client.start_consuming()
-
 
 if __name__ == "__main__":
     main()

@@ -38,7 +38,7 @@ TS = TypeVar("TS", bound="TimeStamped")
 def interpolate(target_time: float, data: Iterable[TS], field_selector: Callable[[TS], Any]):
     if len(data) < 2:
         return None
-    sorted_data = sorted(data, key=lambda d: d[rb.TIMESTAMP])
+    sorted_data = sorted(data, key=lambda d: d.timestamp)
 
     times = np.array([d.timestamp for d in sorted_data])
     values = np.array([field_selector(d) for d in sorted_data])
