@@ -82,12 +82,11 @@ services:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./DTsolution/DTservices/data_recorder/influxdb.yml:/app/influxdb.yml:rw
       - ./DTsolution/DTservices/wear_detection/wear_detection.py:/app/wear_detection.py
     command: python -u wear_detection.py
     depends_on:
-      - influxdb
       - mockup
+      - rt_robot_prediction
 
   stuck_joint:
     container_name: stuck_joint

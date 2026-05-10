@@ -1,82 +1,83 @@
 import time
 import threading
+from collections import deque
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
-from influxdb_client import InfluxDBClient
+from scipy.interpolate import interp1d
 
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import PhysicalTwinState, WearStatus
+from communication.typed_protocol import PhysicalTwinState, KinematicModelState, WearStatus
 from communication.typed_protocol_client import TypedRabbitMQClient
 import queue
 
-CHECK_INTERVAL = 300    # seconds between wear checks
-ANALYSIS_WINDOW = 1800  # seconds of history to analyse
-MIN_SAMPLES = 50        # minimum aligned data points required
-WEAR_RATIO = 2.0        # late MAD must be this many times early MAD to flag wear
-MIN_BASELINE_DEV = 1e-4 # rad — below this early MAD is treated as noise
+CHECK_INTERVAL = 60     
+ANALYSIS_WINDOW = 300   
+MIN_SAMPLES = 50        
+WEAR_RATIO = 2.0        # late MAD / early MAD ratio to flag wear
+MIN_BASELINE_DEV = 1e-4 # rad — skip ratio check if early baseline is pure noise
+WEAR_DELTA = 0.02       # rad — absolute MAD increase also flags wear
 N_JOINTS = 6
 
 publish_queue: queue.Queue[WearStatus] = queue.Queue()
-JOINT_COLS = [f"q_actual_{i}" for i in range(N_JOINTS)]
+
+pt_deque: deque[PhysicalTwinState] = deque(maxlen=5000)
+kin_deque: deque[KinematicModelState] = deque(maxlen=10000)
 
 
-def fetch_joint_df(query_api, bucket: str, measurement: str) -> pd.DataFrame | None:
-    field_filter = " or ".join(f'r["_field"] == "q_actual_{i}"' for i in range(N_JOINTS))
-    query = f"""
-from(bucket: "{bucket}")
-  |> range(start: -{ANALYSIS_WINDOW}s)
-  |> filter(fn: (r) => r["_measurement"] == "{measurement}")
-  |> filter(fn: (r) => {field_filter})
-  |> aggregateWindow(every: 1s, fn: mean, createEmpty: false)
-  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-"""
-    result = query_api.query_data_frame(query)
-    if isinstance(result, list):
-        if not result:
-            return None
-        result = pd.concat(result, ignore_index=True)
-    if result.empty or not all(c in result.columns for c in JOINT_COLS):
-        return None
-    df = result.set_index("_time")[JOINT_COLS].dropna()
-    df.index = pd.to_datetime(df.index, utc=True)
-    return df.sort_index()
+def check_wear() -> None:
+    cutoff = time.time() - ANALYSIS_WINDOW
+    pt_snap = [s for s in list(pt_deque) if s.timestamp >= cutoff]
+    kin_snap = [s for s in list(kin_deque) if s.timestamp >= cutoff]
 
-
-def check_wear(query_api, bucket: str) -> None:
-    pt = fetch_joint_df(query_api, bucket, "robotarm.pt.state")
-    kin = fetch_joint_df(query_api, bucket, "rt_model.dt.state")
-
-    if pt is None or kin is None:
-        print("Wear check: insufficient data in InfluxDB")
+    if len(pt_snap) < MIN_SAMPLES:
+        print(f"Wear check: only {len(pt_snap)} PT samples (need {MIN_SAMPLES})")
+        return
+    if len(kin_snap) < 2:
+        print(f"Wear check: insufficient KIN samples ({len(kin_snap)})")
         return
 
-    merged = pt.join(kin, how="inner", lsuffix="_pt", rsuffix="_kin")
-    if len(merged) < MIN_SAMPLES:
-        print(f"Wear check: only {len(merged)} aligned samples (need {MIN_SAMPLES})")
+    pt_times = np.array([s.timestamp for s in pt_snap])
+    pt_pos = np.array([s.q_actual for s in pt_snap])      
+
+    kin_times_raw = np.array([s.timestamp for s in kin_snap])
+    kin_pos_raw = np.array([s.q_actual for s in kin_snap])
+
+    sort_idx = np.argsort(kin_times_raw)
+    kin_times = kin_times_raw[sort_idx]
+    kin_pos = kin_pos_raw[sort_idx]
+
+    valid = (pt_times >= kin_times[0]) & (pt_times <= kin_times[-1])
+    if valid.sum() < MIN_SAMPLES:
+        print(f"Wear check: only {valid.sum()} overlapping samples (need {MIN_SAMPLES})")
         return
 
-    mid = len(merged) // 2
+    f = interp1d(kin_times, kin_pos, axis=0, kind="linear")
+    kin_interp = f(pt_times[valid])                         
+    dev = np.abs(pt_pos[valid] - kin_interp)                
+
+    mid = len(dev) // 2
     affected_joints = []
 
     for i in range(N_JOINTS):
-        dev = (merged[f"q_actual_{i}_pt"] - merged[f"q_actual_{i}_kin"]).abs()
-        early_mad = dev.iloc[:mid].mean()
-        late_mad = dev.iloc[mid:].mean()
-        if early_mad >= MIN_BASELINE_DEV and late_mad / early_mad > WEAR_RATIO:
+        early_mad = dev[:mid, i].mean()
+        late_mad = dev[mid:, i].mean()
+        ratio_ok = early_mad >= MIN_BASELINE_DEV and late_mad / early_mad > WEAR_RATIO
+        delta_ok = late_mad - early_mad > WEAR_DELTA
+        if ratio_ok or delta_ok:
             affected_joints.append(i)
 
     wear_detected = len(affected_joints) > 0
-    print(f"Wear check: wear_detected={wear_detected}, affected_joints={affected_joints}")
+    early_late = [f"{dev[:mid,i].mean():.4f}/{dev[mid:,i].mean():.4f}" for i in range(N_JOINTS)]
+    print(f"Wear check: wear_detected={wear_detected}, joints={affected_joints}, early/late={early_late}")
     publish_queue.put(WearStatus(wear_detected=wear_detected, affected_joints=affected_joints))
 
 
-def wear_loop(query_api, bucket: str) -> None:
+def wear_loop() -> None:
     while True:
         try:
-            check_wear(query_api, bucket)
+            check_wear()
         except Exception as e:
             print(f"Wear check error: {e}")
         time.sleep(CHECK_INTERVAL)
@@ -84,20 +85,16 @@ def wear_loop(query_api, bucket: str) -> None:
 
 def main():
     connect_config = load_config(Path("connect.yml"))
-    influx_config = load_config(Path("influxdb.yml"))
 
-    with (
-        InfluxDBClient(**influx_config) as influx_client,
-        TypedRabbitMQClient(Rabbitmq(**connect_config)) as typed_client,
-    ):
-        query_api = influx_client.query_api()
-        bucket = influx_config["bucket"]
+    with TypedRabbitMQClient(Rabbitmq(**connect_config)) as typed_client:
+        typed_client.subscribe(PhysicalTwinState, pt_deque.append, "wear_det_pt")
+        typed_client.subscribe(KinematicModelState, kin_deque.append, "wear_det_kin")
 
-        # no-op subscription to keep the RabbitMQ IO loop alive for publishing
-        typed_client.subscribe(PhysicalTwinState, lambda _: None, "wear_detection_heartbeat")
-
-        threading.Thread(target=wear_loop, args=(query_api, bucket), daemon=True).start()
-        threading.Thread(target=lambda: typed_publisher_loop(typed_client, publish_queue), daemon=True).start()
+        threading.Thread(target=wear_loop, daemon=True).start()
+        threading.Thread(
+            target=lambda: typed_publisher_loop(typed_client, publish_queue),
+            daemon=True
+        ).start()
 
         typed_client.client.start_consuming()
 
