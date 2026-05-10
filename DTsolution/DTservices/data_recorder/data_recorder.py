@@ -16,6 +16,7 @@ from communication.typed_protocol import (
     KinematicModelState,
     StuckJointStatus,
     FilteredState,
+    WearStatus,
     MsgProtocol
 )
 from communication.typed_protocol_client import TypedRabbitMQClient
@@ -77,6 +78,7 @@ def main():
             StuckJointStatus: write_dataclass,
             LoadProgram: write_dataclass,
             FilteredState: write_dataclass,
+            WearStatus: write_dataclass,
         }
 
         for msg_type, handler in subscriptions.items():

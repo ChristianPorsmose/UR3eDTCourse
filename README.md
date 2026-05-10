@@ -66,3 +66,8 @@ PYTHONPATH=$(pwd):$VENV_PATH godot --path DTsolution/DTservices/GODOT_Visualizat
 ### TODO :
 
 ADD FILTER TO SERVICES AND SUBSCRIBE TO FILTERED STATE 
+
+
+note: 
+
+residual-based anomaly detection

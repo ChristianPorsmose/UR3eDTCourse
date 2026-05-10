@@ -116,3 +116,13 @@ class LoadTCPProgram(TimeStamped):
     @classmethod
     def routing_key(cls) -> str:
         return "load_program.tcp"
+
+
+@dataclass
+class WearStatus(TimeStamped):
+    wear_detected: bool
+    affected_joints: list[int]
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "wear.status"
