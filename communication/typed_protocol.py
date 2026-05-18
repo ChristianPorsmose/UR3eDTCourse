@@ -125,3 +125,13 @@ class WearStatus(TimeStamped):
     @classmethod
     def routing_key(cls) -> str:
         return "wear.status"
+
+@dataclass
+class SurfaceViolation(TimeStamped):
+    violation_detected: bool
+    violating_joints: list[int]
+    joint_z_positions: list[float]
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "surface.violation"

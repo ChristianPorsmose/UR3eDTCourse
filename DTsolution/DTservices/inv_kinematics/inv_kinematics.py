@@ -1,6 +1,5 @@
 from pathlib import Path
 import time
-from xml.parsers.expat import model
 from utils.utils import load_config
 from communication.typed_protocol_client import TypedRabbitMQClient
 from communication.typed_protocol import StuckJointStatus, LoadTCPProgram, LoadProgram, Play
@@ -8,55 +7,19 @@ from communication.rabbitmq import Rabbitmq
 import roboticstoolbox as rtb
 from spatialmath import SE3
 import numpy as np
-
-class DHparam():
-    def __init__(self, d, a, alpha):
-        self.d = d
-        self.a = a
-        self.alpha = alpha
-
-    def get_params(self):
-        return self.d, self.a, self.alpha
+from models.ur3e import build_ur3e
 
 class BreakableRobot:
     def __init__(self, rabbit_mq_client: TypedRabbitMQClient = None):
-        # Initialize state
         self.stuck_joints = [False] * 6
         self.joint_angles = [0] * 6
-        self.ur3e = self.init_ur3e()
+        self.ur3e = self._init_ur3e()
 
         if rabbit_mq_client != None:
             self.rabbit_mq_client = rabbit_mq_client
 
-    def init_ur3e(self):
-        # DHParams specified on website
-        DHparams = [
-            DHparam(0.15185, 0, np.pi/2),
-            DHparam(0.0, -0.24355, 0.0),
-            DHparam(0.0, -0.2132, 0.0),
-            DHparam(0.13105, 0.0, np.pi/2),
-            DHparam(0.08535, 0, -np.pi/2),
-            DHparam(0.0921, 0, 0)
-        ]
-
-        # Define the sequence of elementary transforms
-        ets = rtb.ETS()
-        for i, link in enumerate(DHparams):
-            # Unpack parameters
-            d, a, alpha = link.get_params()
-
-            # Set the angle of the stuck joint if it is stuck
-            if self.stuck_joints[i]:
-                ets *= rtb.ET.Rz(self.joint_angles[i])
-            else:
-                ets *= rtb.ET.Rz() 
-            ets *= rtb.ET.tz(d) if d != 0 else rtb.ET.tx(a)
-            ets *= rtb.ET.Rx(alpha)
-
-        # Compile into an ERobot model
-        ur3e = rtb.ERobot(ets, name="UR3e")
-
-        return ur3e
+    def _init_ur3e(self) -> rtb.ERobot:
+        return build_ur3e(self.stuck_joints, self.joint_angles)
 
     def inv_kinematics(self, tcp_pos: np.ndarray, tcp_rot: np.ndarray, 
                    publish: bool = True, ignore_all_rotations=False) -> np.ndarray:
@@ -116,7 +79,7 @@ class BreakableRobot:
     def update_state(self, body: StuckJointStatus):
         self.stuck_joints = body.stuck_joints 
         self.joint_angles = body.joint_positions 
-        self.ur3e = self.init_ur3e()
+        self.ur3e = self._init_ur3e()
 
 def main():
     # Load config

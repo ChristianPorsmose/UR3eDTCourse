@@ -171,6 +171,17 @@ services:
     command: python -u inv_kinematics.py
     depends_on:
       - stuck_joint
+
+  surface_detection:
+    container_name: surface_detection
+    build:
+      <<: *base-build
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/surface_detection/surface_detection.py:/app/surface_detection.py
+    command: python -u surface_detection.py
+    depends_on:
+      - mockup
 volumes:
   db-data:
   grafana-data:
