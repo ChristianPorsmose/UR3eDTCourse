@@ -21,6 +21,7 @@ FROM dependency-builder AS base
 
 COPY communication/ communication/
 COPY DTsolution/utils utils
+COPY DTsolution/models models
 
 RUN poetry install --no-interaction --no-ansi
 

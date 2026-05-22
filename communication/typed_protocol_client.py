@@ -1,5 +1,6 @@
+import time
 from dataclasses import asdict
-from communication.typed_protocol import MsgProtocol, T, CtrlMsg
+from communication.typed_protocol import MsgProtocol, T, CtrlMsg, TimeStamped
 from communication.rabbitmq import Rabbitmq
 from typing import Callable, Type
 
@@ -25,10 +26,12 @@ class TypedRabbitMQClient:
         def handler(_, __, ___, body):
             if issubclass(msg_type, CtrlMsg):
                 if body.get("type") != msg_type.type:
-                    return 
+                    return
                 expected_fault = getattr(msg_type, "fault_type", None)
                 if expected_fault and body.get("fault_type") != expected_fault:
                     return
+            if issubclass(msg_type, TimeStamped):
+                body["timestamp"] = time.time()
             try:
                 msg = msg_type(**body)
                 callback(msg)

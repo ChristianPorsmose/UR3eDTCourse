@@ -44,22 +44,19 @@ class ParticleFilter:
         self.initialized = True
 
 
-    def predict(self, dt: float) -> None:
+    def predict(self, dt: float, control_vel: Optional[Array] = None) -> None:
         pos = self.particles[:, :self.dim]
-        vel = self.particles[:, self.dim:]
+        vel = self.particles[:, self.dim:] if control_vel is None else control_vel
 
         noise_pos = np.random.normal(
             0, self.process_noise_std * np.sqrt(dt), pos.shape
         )
         noise_vel = np.random.normal(
-            0, self.process_noise_std * np.sqrt(dt), vel.shape
+            0, self.process_noise_std * np.sqrt(dt), (self.num_particles, self.dim)
         )
 
-        pos = pos + vel * dt + noise_pos
-        vel = vel + noise_vel
-
-        self.particles[:, :self.dim] = pos
-        self.particles[:, self.dim:] = vel
+        self.particles[:, :self.dim] = pos + vel * dt + noise_pos
+        self.particles[:, self.dim:] = vel + noise_vel
 
     def update(self, measurement_pos: Array) -> None:
         pos = self.particles[:, :self.dim]
@@ -84,6 +81,6 @@ class ParticleFilter:
         self.weights.fill(1.0 / self.num_particles)
 
     def estimate(self) -> tuple[Array, Array]:
-        pos = np.mean(self.particles[:, :self.dim], axis=0)
-        vel = np.mean(self.particles[:, self.dim:], axis=0)
+        pos = np.average(self.particles[:, :self.dim], weights=self.weights, axis=0)
+        vel = np.average(self.particles[:, self.dim:], weights=self.weights, axis=0)
         return pos, vel

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field, asdict
 from typing import Protocol, TypeVar, runtime_checkable, Union
-from datetime import datetime, UTC
 
 T = TypeVar("T", bound="MsgProtocol")
 
@@ -44,6 +44,7 @@ class InjectFault(CtrlMsg):
 @dataclass
 class InjectWear(InjectFault):
     duration: float
+    fault_value : float
     joints: list[int]
     fault_type: str = "wear"
 
@@ -55,9 +56,7 @@ class InjectStuckJoint(InjectFault):
 
 @dataclass(kw_only=True)
 class TimeStamped:
-    timestamp: float = field(
-        default_factory=lambda: datetime.now(UTC).timestamp()
-    )
+    timestamp: float = field(default_factory=time.time)
 
 @dataclass
 class RobotStateMessage(TimeStamped):
@@ -116,3 +115,23 @@ class LoadTCPProgram(TimeStamped):
     @classmethod
     def routing_key(cls) -> str:
         return "load_program.tcp"
+
+
+@dataclass
+class WearStatus(TimeStamped):
+    wear_detected: bool
+    affected_joints: list[int]
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "wear.status"
+
+@dataclass
+class SurfaceViolation(TimeStamped):
+    violation_detected: bool
+    violating_joints: list[int]
+    joint_z_positions: list[float]
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "surface.violation"
