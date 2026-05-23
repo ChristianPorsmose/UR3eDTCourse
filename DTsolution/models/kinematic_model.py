@@ -97,9 +97,6 @@ class KinematicModel:
                 d_acc(t_acc) + d_cruise(t_cruise) + d_dec(t2)
             ]
 
-            if d_cruise(t1) >= 0 and t > t_acc:
-                print(d_cruise(t1), t1, t, t_cruise)
-
             # Apply directionality back to the final displacement
             return x0 + dir_x * np.select(conditions, choices, default=np.abs(max_delta_x))
 

@@ -21,13 +21,43 @@ ctrl_queue: Queue[CtrlMsg] = Queue()
 publish_queue: Queue[KinematicModelState] = Queue()
 
 
+# Update your state tracker to include a buffer flag
+dt_state = {
+    "is_program_loaded": False,
+    "play_pending": False  # <-- NEW: Remembers if Play arrived early
+}
+
 def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg):
+    global dt_state
+    
     with model_lock:
         if isinstance(msg, LoadProgram):
+            # 1. Load the program
             model.fmi2SetCommandedJointAngles(msg.joint_positions)
+            dt_state["is_program_loaded"] = True
+            print("Program loaded successfully.", flush=True)
+
+            # 2. Immediately check if a Play command is waiting for this
+            if dt_state["play_pending"]:
+                print("Executing buffered Play command...", flush=True)
+                model.fmi2StartMovement()
+                
+                # Reset states
+                dt_state["play_pending"] = False
+                dt_state["is_program_loaded"] = False 
 
         elif isinstance(msg, Play):
+            # 1. If program isn't loaded yet, hold onto this command!
+            if not dt_state["is_program_loaded"]:
+                print("Play arrived early! Buffering until LoadProgram arrives.", flush=True)
+                dt_state["play_pending"] = True
+                return
+            
+            # 2. Otherwise, execute normally
             model.fmi2StartMovement()
+            
+            # Reset state
+            dt_state["is_program_loaded"] = False
 
 
 def run_simulation(model: KinematicModel, dt: float = 0.05):
