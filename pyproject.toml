@@ -21,6 +21,7 @@ docker = "^7.1.0"
 influxdb-client = "^1.50.0"
 pyyaml = "^6.0.3"
 scikit-learn = "^1.5.0"
+mstlo_python = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

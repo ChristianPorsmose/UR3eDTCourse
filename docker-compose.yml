@@ -13,7 +13,6 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
       DOCKER_INFLUXDB_INIT_ORG: ur3e
       DOCKER_INFLUXDB_INIT_BUCKET: ur3e
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
     volumes:
       - db-data:/var/lib/influxdb:rw
     ports:
@@ -83,6 +82,8 @@ services:
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/wear_detection/wear_detection.py:/app/wear_detection.py
+      - ./DTsolution:/app/DTsolution    
+      - ./__init__.py:/app/__init__.py
     command: python -u wear_detection.py
     depends_on:
       - mockup
@@ -144,9 +145,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=ur3eur3e
     volumes:
       - grafana-data:/var/lib/grafana:rw
-      - ./DTsolution/DTservices/Grafana/Dashboards:/var/lib/grafana/dashboards
-      - ./DTsolution/DTservices/Grafana/Dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./DTsolution/DTservices/Grafana/Datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./DTsolution/DTservices/Grafana/Dashboards:/var/lib/grafana/dashboards:rw
+      - ./DTsolution/DTservices/Grafana/Dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:rw
+      - ./DTsolution/DTservices/Grafana/Datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:rw
     depends_on:
       - influxdb
       - rt_robot_prediction
