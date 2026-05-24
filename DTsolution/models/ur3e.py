@@ -17,6 +17,7 @@ def build_ur3e(stuck_joints=None, joint_angles=None) -> rtb.ERobot:
             ets *= rtb.ET.Rz(joint_angles[i])
         else:
             ets *= rtb.ET.Rz()
-        ets *= rtb.ET.tz(d) if d != 0 else rtb.ET.tx(a)
+        ets *= rtb.ET.tz(d) # Apply Z translation
+        ets *= rtb.ET.tx(a) # Apply X translation
         ets *= rtb.ET.Rx(alpha)
     return rtb.ERobot(ets, name="UR3e")

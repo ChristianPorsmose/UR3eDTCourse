@@ -32,7 +32,7 @@ class BreakableRobot:
             # Strict 3D position only. Great for debugging reachability!
             mask = [1, 1, 1, 0, 0, 0] 
         else:
-            mask = [1, 1, 1, 1, 1, 1]
+            mask = [10, 10, 10, 1, 1, 1]
             for i in range(num_stuck):
                 mask[5 - i] = 0
                     
@@ -42,9 +42,12 @@ class BreakableRobot:
         
         for attempt in range(max_retries):
             # Generate a random initial guess (q0) within joint limits roughly -pi to pi
-            q0 = np.random.uniform(-np.pi, np.pi, self.ur3e.n)
+            if attempt == 0:
+                q0 = self.joint_angles # Start searching with the current position as start value
+            else: # Search elsewhere
+                q0 = np.random.uniform(-np.pi, np.pi, self.ur3e.n)
             
-            sol = self.ur3e.ikine_LM(T, mask=mask, q0=q0)
+            sol = self.ur3e.ikine_GN(T, mask=mask, q0=q0)
             
             if sol.success:
                 success = True

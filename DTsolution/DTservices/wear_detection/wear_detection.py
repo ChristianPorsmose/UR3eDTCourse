@@ -8,7 +8,7 @@ import mstlo_python as mstlo
 from DTsolution.models.DH_model import get_DH_robot
 
 # Set threshold for when wear should be detected
-WEAR_THRESHOLD = 0.15 # Larger than some of the larger swings when no wear is present 
+WEAR_THRESHOLD = 0.1 # Larger than some of the larger swings when no wear is present 
 
 # load DH model
 robot = get_DH_robot()
@@ -16,7 +16,7 @@ robot = get_DH_robot()
 # Instantiate STL monitor
 vars = mstlo.Variables()
 vars.set("threshold", WEAR_THRESHOLD)
-phi = mstlo.parse_formula("G[0,4](e > $threshold)")
+phi = mstlo.parse_formula("G[0,9](e < $threshold)")
 
 # Create the Monitor (using Robustness Semantics)
 monitor = mstlo.Monitor(

@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 import threading
 import queue
+import numpy as np
 
 class RobotScriptBase(Node3D):
     """
@@ -53,7 +54,8 @@ class RobotScriptBase(Node3D):
     @private
     def apply_rotation(self, angle, link_num: int):
         joint_axis_lut = {1: "y", 2: "z", 3: "z", 4: "z", 5: "y", 6: "z"}
-        angle_offsets = {1: 0, 2: -180, 3: 0, 4: -180, 5: 0, 6: 0}
+        angle_offsets = {1: 0, 2: -np.pi/2, 3: 0, 4: -np.pi/2, 5: 0, 6: 0} # Upright position
+        rotation_signs = {1: 1, 2: -1, 3: 1, 4: -1, 5: 1, 6: 1} # Upright position
         children_base_string = "Base/Link1/Link2/Link3/Link4/Link5/Link6"
 
         # Calculate path: Base/Link1 is index 1, etc.
@@ -63,9 +65,9 @@ class RobotScriptBase(Node3D):
             rotation_rad = Vector3()
             rotation_rad.x = 0
             if joint_axis_lut[link_num] == "y":
-                rotation_rad.y = angle - angle_offsets[link_num]
+                rotation_rad.y = rotation_signs[link_num] * (angle - angle_offsets[link_num])
                 rotation_rad.z = 0
             else:
                 rotation_rad.y = 0
-                rotation_rad.z = angle - angle_offsets[link_num]
+                rotation_rad.z = rotation_signs[link_num] * (angle - angle_offsets[link_num])
             child.set_rotation(rotation_rad)
