@@ -67,3 +67,22 @@ $VENV_PATH = "$(Get-Location)\venv\Lib\site-packages"
 
 $env:PYTHONPATH = "$(Get-Location);$VENV_PATH"
 godot --path DTsolution\DTservices\GODOT_Visualization_service\ur-3e-visualization\ World.tscn
+
+### TODO :
+
+ADD FILTER TO SERVICES AND SUBSCRIBE TO FILTERED STATE 
+
+
+note: 
+
+residual-based anomaly detection
+
+
+
+### TO RUN STUFF 
+
+cp .env.x86 .env && docker compose up --build -d 
+
+godot will be: 
+
+http://localhost:6080/vnc.html

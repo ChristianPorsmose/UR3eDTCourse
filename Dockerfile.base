@@ -1,16 +1,30 @@
-FROM python:3.11-slim
-
+FROM python:3.11-slim AS base-setup
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential gcc g++ python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install poetry
+RUN pip install poetry virtualenv==20.36.1
+RUN poetry config virtualenvs.create false
+
+
+FROM base-setup AS dependency-builder
+
+RUN touch README.md
 
 COPY pyproject.toml poetry.lock* ./
+
+RUN poetry install --no-root --no-interaction --no-ansi
+
+FROM dependency-builder AS base
+
 COPY communication/ communication/
 COPY DTsolution/utils utils
+COPY DTsolution/models models
 
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-root
+RUN poetry install --no-interaction --no-ansi
+
+ENV PYTHONPATH="/app"
+
+FROM base AS service
