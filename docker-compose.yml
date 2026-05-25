@@ -183,6 +183,18 @@ services:
     command: python -u surface_detection.py
     depends_on:
       - mockup
+
+  calibration:
+    container_name: calibration
+    build:
+      <<: *base-build
+    volumes:
+      - ./communication/connect.yml:/app/connect.yml:rw
+      - ./DTsolution/DTservices/calibration/calibration.py:/app/calibration.py
+    command: python -u calibration.py
+    depends_on:
+      - mockup
+      - rt_robot_prediction
 volumes:
   db-data:
   grafana-data:

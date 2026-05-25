@@ -8,6 +8,7 @@ from communication.rabbitmq import Rabbitmq
 from communication.typed_protocol import (
     LoadProgram,
     Play,
+    Calibrate,
     KinematicModelState,
     CtrlMsg
 )
@@ -17,7 +18,7 @@ from DTsolution.models.kinematic_model import KinematicModel
 
 model_lock = threading.Lock()
 
-ctrl_queue: Queue[CtrlMsg] = Queue()
+ctrl_queue: Queue[CtrlMsg | Calibrate] = Queue()
 publish_queue: Queue[KinematicModelState] = Queue()
 
 
@@ -27,7 +28,7 @@ dt_state = {
     "play_pending": False  # <-- NEW: Remembers if Play arrived early
 }
 
-def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg):
+def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
     global dt_state
     
     with model_lock:
@@ -45,6 +46,13 @@ def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg):
                 # Reset states
                 dt_state["play_pending"] = False
                 dt_state["is_program_loaded"] = False 
+
+        elif isinstance(msg, Calibrate):
+            model.fmi2SetCommandedJointAngles(msg.joint_positions)
+            model.fmi2StartMovement()
+            dt_state["is_program_loaded"] = False
+            dt_state["play_pending"] = False
+            print("Calibration applied.", flush=True)
 
         elif isinstance(msg, Play):
             # 1. If program isn't loaded yet, hold onto this command!
@@ -111,6 +119,12 @@ def main():
             Play,
             ctrl_queue.put,
             queue_name="model_play"
+        )
+
+        typed_client.subscribe(
+            Calibrate,
+            ctrl_queue.put,
+            queue_name="model_calibrate"
         )
 
         threading.Thread(
