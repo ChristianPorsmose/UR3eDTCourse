@@ -48,9 +48,10 @@ def main():
         wear_injected = False
         stuck_injected = False
         while True:
-            time.sleep(30)
+            time.sleep(10)
             enqueue_program(scale=4*np.pi)
             elapsed = time.time() - start_time
+            time.sleep(40)
             if not wear_injected and elapsed >= 120:
                 inject_wear()
                 wear_injected = True

@@ -8,6 +8,6 @@ from base_robot import RobotScriptBase
 class PTScript(RobotScriptBase):
     def _ready(self):
         self.setup_robot(
-            topic=ROUTING_KEY_STATE, 
+            topic=ROUTING_KEY_STATE,
             consumer_tag="long_name"
         )

@@ -13,6 +13,7 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
       DOCKER_INFLUXDB_INIT_ORG: ur3e
       DOCKER_INFLUXDB_INIT_BUCKET: ur3e
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
     volumes:
       - db-data:/var/lib/influxdb:rw
     ports:
@@ -43,7 +44,10 @@ services:
     container_name: ur3e_mockup
     build:
       context: ./ur3e_mockup
-      dockerfile: ${DOCKERFILE:-Dockerfile.x86}
+      dockerfile: Dockerfile
+      args:
+        PLATFORM: ${MOCKUP_PLATFORM:-linux/amd64}
+        BINARY: ${MOCKUP_BINARY:-ur3e_mockup_linux_x86_64}
     volumes:
       - ./startup/startup.conf:/app/startup.conf:z
     restart: unless-stopped
@@ -153,15 +157,18 @@ services:
       - rt_robot_prediction
   godot:
     container_name: godot
-    build: 
+    build:
       context: .
-      dockerfile: ${DOCKERFILE2:-DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/Dockerfile.x86}
-    volumes:
-      - ./communication/connect.yml:/app/connect.yml:rw
+      dockerfile: DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/Dockerfile
+      args:
+        BASE_IMAGE: ${GODOT_BASE_IMAGE:-communication-base}
     ports:
       - "6080:6080"
     depends_on:
-      - mockup
+      rabbitmq:
+        condition: service_healthy
+      mockup:
+        condition: service_started
   inv_kinematics:
     container_name: inv_kinematics
     build:

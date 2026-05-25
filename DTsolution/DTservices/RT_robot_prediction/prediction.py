@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from pathlib import Path
 import time
 import threading
@@ -16,56 +17,48 @@ from communication.typed_protocol_client import TypedRabbitMQClient
 from DTsolution.models.kinematic_model import KinematicModel
 
 
+class State(Enum):
+    IDLE = auto()
+    WAITING_FOR_PLAY = auto()
+    PLAY_BUFFERED = auto()
+
+
 model_lock = threading.Lock()
+state = State.IDLE
 
 ctrl_queue: Queue[CtrlMsg | Calibrate] = Queue()
 publish_queue: Queue[KinematicModelState] = Queue()
 
 
-# Update your state tracker to include a buffer flag
-dt_state = {
-    "is_program_loaded": False,
-    "play_pending": False  # <-- NEW: Remembers if Play arrived early
-}
-
 def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
-    global dt_state
-    
+    global state
+
     with model_lock:
-        if isinstance(msg, LoadProgram):
-            # 1. Load the program
-            model.fmi2SetCommandedJointAngles(msg.joint_positions)
-            dt_state["is_program_loaded"] = True
-            print("Program loaded successfully.", flush=True)
-
-            # 2. Immediately check if a Play command is waiting for this
-            if dt_state["play_pending"]:
-                print("Executing buffered Play command...", flush=True)
+        match (state, msg):
+            case (_, Calibrate()):
+                model.fmi2SetCommandedJointAngles(msg.joint_positions)
                 model.fmi2StartMovement()
-                
-                # Reset states
-                dt_state["play_pending"] = False
-                dt_state["is_program_loaded"] = False 
+                state = State.IDLE
+                print("Calibration applied.", flush=True)
 
-        elif isinstance(msg, Calibrate):
-            model.fmi2SetCommandedJointAngles(msg.joint_positions)
-            model.fmi2StartMovement()
-            dt_state["is_program_loaded"] = False
-            dt_state["play_pending"] = False
-            print("Calibration applied.", flush=True)
+            case (State.PLAY_BUFFERED, LoadProgram()):
+                model.fmi2SetCommandedJointAngles(msg.joint_positions)
+                model.fmi2StartMovement()
+                state = State.IDLE
+                print("Executing buffered Play command...", flush=True)
 
-        elif isinstance(msg, Play):
-            # 1. If program isn't loaded yet, hold onto this command!
-            if not dt_state["is_program_loaded"]:
+            case (_, LoadProgram()):
+                model.fmi2SetCommandedJointAngles(msg.joint_positions)
+                state = State.WAITING_FOR_PLAY
+                print("Program loaded successfully.", flush=True)
+
+            case (State.WAITING_FOR_PLAY, Play()):
+                model.fmi2StartMovement()
+                state = State.IDLE
+
+            case (_, Play()):
+                state = State.PLAY_BUFFERED
                 print("Play arrived early! Buffering until LoadProgram arrives.", flush=True)
-                dt_state["play_pending"] = True
-                return
-            
-            # 2. Otherwise, execute normally
-            model.fmi2StartMovement()
-            
-            # Reset state
-            dt_state["is_program_loaded"] = False
 
 
 def run_simulation(model: KinematicModel, dt: float = 0.05):
@@ -85,7 +78,7 @@ def run_simulation(model: KinematicModel, dt: float = 0.05):
             pos = [float(x) for x in model.fmi2GetJointPositions()]
             vel = [float(x) for x in model.fmi2GetJointVelocities()]
 
-            state = KinematicModelState(
+            state_msg = KinematicModelState(
                 robot_mode="RUNNING" if model.moving else "IDLE",
                 q_actual=pos,
                 qd_actual=vel,
@@ -95,7 +88,7 @@ def run_simulation(model: KinematicModel, dt: float = 0.05):
                 tcp_pose=[0.0] * 6
             )
 
-        publish_queue.put(state)
+        publish_queue.put(state_msg)
 
         elapsed_time = time.time() - start_time
         time.sleep(max(0, dt - elapsed_time))
@@ -109,23 +102,9 @@ def main():
     with TypedRabbitMQClient(Rabbitmq(**config)) as typed_client:
         print("STARTING KINEMATIC MODEL SERVICE")
 
-        typed_client.subscribe(
-            LoadProgram,
-            ctrl_queue.put,
-            queue_name="model_load_program"
-        )
-
-        typed_client.subscribe(
-            Play,
-            ctrl_queue.put,
-            queue_name="model_play"
-        )
-
-        typed_client.subscribe(
-            Calibrate,
-            ctrl_queue.put,
-            queue_name="model_calibrate"
-        )
+        typed_client.subscribe(LoadProgram, ctrl_queue.put, queue_name="model_load_program")
+        typed_client.subscribe(Play, ctrl_queue.put, queue_name="model_play")
+        typed_client.subscribe(Calibrate, ctrl_queue.put, queue_name="model_calibrate")
 
         threading.Thread(
             target=lambda: typed_publisher_loop(typed_client, publish_queue),

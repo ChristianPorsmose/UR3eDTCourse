@@ -71,3 +71,13 @@ ADD FILTER TO SERVICES AND SUBSCRIBE TO FILTERED STATE
 note: 
 
 residual-based anomaly detection
+
+
+
+### TO RUN STUFF 
+
+cp .env.x86 .env && docker compose up --build -d 
+
+godot will be: 
+
+http://localhost:6080/vnc.html
