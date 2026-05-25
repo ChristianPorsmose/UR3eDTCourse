@@ -1,7 +1,7 @@
-FROM communication-base
+ARG BASE_IMAGE=communication-base
+FROM --platform=linux/amd64 ${BASE_IMAGE}
 
 USER root
-
 
 RUN apt-get update && apt-get install -y \
     wget unzip curl \
@@ -9,10 +9,6 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 libdbus-1-3 \
     xvfb x11vnc websockify novnc fluxbox procps \
     && rm -rf /var/lib/apt/lists/*
-
-
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install pika numpy pyyaml
 
 RUN wget https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_linux.x86_64.zip \
     && unzip Godot_v4.6.2-stable_linux.x86_64.zip -d /usr/local/bin/ \
@@ -26,31 +22,23 @@ RUN mkdir -p addons && \
     unzip addon.zip -d addons/ && \
     rm addon.zip
 
+# Install pure-Python deps into /app/lib — version-agnostic, works with any Python runtime
+RUN pip install --target /app/lib --no-binary :all: pika pyyaml
 
 COPY DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/ .
 
-
-RUN export PYTHONPATH=/app:/usr/local/lib/python3.11/site-packages; \
-    xvfb-run godot --headless --editor --quit || true
+RUN PYTHONPATH=/app:/app/lib timeout 120 xvfb-run -a godot --headless --editor --quit; exit 0
 
 EXPOSE 6080
-
 
 CMD bash -c "\
     Xvfb :99 -screen 0 1920x1080x24 & \
     sleep 2; \
     export DISPLAY=:99; \
-    \
-
     fluxbox & \
     sleep 1; \
-    \
-
     x11vnc -display :99 -nopw -forever -shared -bg -rfbport 5900 -noxdamage; \
     sleep 2; \
-    \
-
     /usr/share/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 6080 & \
     sleep 2; \
-    \
-    PYTHONPATH=/app:/usr/local/lib/python3.11/site-packages godot --audio-driver Dummy World.tscn"
+    PYTHONPATH=/app:/app/lib godot --audio-driver Dummy World.tscn"

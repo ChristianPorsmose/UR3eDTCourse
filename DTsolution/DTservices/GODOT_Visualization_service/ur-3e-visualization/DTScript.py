@@ -7,6 +7,6 @@ from base_robot import RobotScriptBase
 class DTScript(RobotScriptBase):
     def _ready(self):
         self.setup_robot(
-            topic=ROUTING_KEY_RT_MODEL_STATE, 
+            topic=ROUTING_KEY_RT_MODEL_STATE,
             consumer_tag="short_name_hehehehhe"
         )

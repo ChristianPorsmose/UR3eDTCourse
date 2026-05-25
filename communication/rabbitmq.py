@@ -84,7 +84,7 @@ class Rabbitmq:
                                    body=encode_json(message),
                                    properties=properties
                                    )
-        print(f"Message sent to {routing_key}.", flush=True)
+        #print(f"Message sent to {routing_key}.", flush=True)
         self._l.debug(f"Message sent to {routing_key}.")
         self._l.debug(message)
 

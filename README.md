@@ -56,12 +56,17 @@ docker compose up --build
 
 (mosen : docker build --platform linux/amd64 -t communication-base2:latest -f Dockerfile.base .) 
 
-## GODOT LOCAL :: 
+## GODOT LOCAL 
 
 export VENV_PATH=$(pwd)/venv/lib/python3.11/site-packages
 
 PYTHONPATH=$(pwd):$VENV_PATH godot --path DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/ World.tscn
 
+### Powershell
+$VENV_PATH = "$(Get-Location)\venv\Lib\site-packages"
+
+$env:PYTHONPATH = "$(Get-Location);$VENV_PATH"
+godot --path DTsolution\DTservices\GODOT_Visualization_service\ur-3e-visualization\ World.tscn
 
 ### TODO :
 
@@ -71,3 +76,13 @@ ADD FILTER TO SERVICES AND SUBSCRIBE TO FILTERED STATE
 note: 
 
 residual-based anomaly detection
+
+
+
+### TO RUN STUFF 
+
+cp .env.x86 .env && docker compose up --build -d 
+
+godot will be: 
+
+http://localhost:6080/vnc.html

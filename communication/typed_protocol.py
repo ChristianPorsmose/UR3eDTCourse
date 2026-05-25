@@ -135,3 +135,13 @@ class SurfaceViolation(TimeStamped):
     @classmethod
     def routing_key(cls) -> str:
         return "surface.violation"
+
+@dataclass
+class Calibrate(TimeStamped):
+    joint_positions: list[float]
+    max_velocity: float
+    acceleration: float
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "calibrate.command"
