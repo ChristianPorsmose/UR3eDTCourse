@@ -13,6 +13,7 @@ from communication.rabbitmq import Rabbitmq
 from communication.typed_protocol import (
     PhysicalTwinState,
     LoadProgram,
+    InjectWear,
     KinematicModelState,
     StuckJointStatus,
     FilteredState,
@@ -54,6 +55,29 @@ def write_dataclass(writer: WriterFn, dp: MsgProtocol) -> None:
 
     writer(record=point)
 
+def ensure_bucket_exists(client: InfluxDBClient, bucket_name: str, org_name: str) -> None:
+    """Checks if a bucket exists, and creates it on the fly if it doesn't."""
+    buckets_api = client.buckets_api()
+    
+    # Check if bucket already exists
+    if buckets_api.find_bucket_by_name(bucket_name):
+        print(f"Bucket '{bucket_name}' already exists.")
+        return
+
+    print(f"Bucket '{bucket_name}' not found. Creating it...")
+    
+    # We need the org_id to create a bucket
+    orgs_api = client.organizations_api()
+    orgs = orgs_api.find_organizations(org=org_name)
+    
+    if not orgs:
+        raise ValueError(f"Organization '{org_name}' not found.")
+    
+    org_id = orgs[0].id
+    
+    # Create the bucket
+    buckets_api.create_bucket(bucket_name=bucket_name, org_id=org_id)
+    print(f"Successfully created bucket: '{bucket_name}'")
 
 def main():
     connect_config = load_config(Path("connect.yml"))
@@ -63,6 +87,9 @@ def main():
         TypedRabbitMQClient(Rabbitmq(**connect_config)) as typed_client,
         InfluxDBClient(**influx_config) as client
     ):
+        # Ensure the bucket exists before we start writing
+        ensure_bucket_exists(client, influx_config["bucket"], influx_config["org"])
+
         write_api: WriteApi = client.write_api(
             write_options=ASYNCHRONOUS
         )
@@ -78,6 +105,7 @@ def main():
             KinematicModelState: write_dataclass,
             StuckJointStatus: write_dataclass,
             LoadProgram: write_dataclass,
+            InjectWear: write_dataclass,
             FilteredState: write_dataclass,
             WearStatus: write_dataclass,
             Deviation: write_dataclass,

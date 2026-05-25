@@ -1,5 +1,6 @@
 import pika
 import logging
+import time
 import ssl as ssl_package
 
 from communication.protocol import *
@@ -56,10 +57,26 @@ class Rabbitmq:
         return self
 
     def connect_to_server(self):
-        self.connection = pika.BlockingConnection(self.parameters)
-        self._l.debug("Connected.")
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange=self.exchange_name, exchange_type=self.exchange_type)
+        retries = 5
+        while retries > 0:
+            try:
+                self.connection = pika.BlockingConnection(self.parameters)
+                self._l.debug("Connected.")
+                
+                # Set up channel and exchange only after a successful connection
+                self.channel = self.connection.channel()
+                self.channel.exchange_declare(exchange=self.exchange_name, exchange_type=self.exchange_type)
+                
+                break  # Success! Exit the retry loop.
+                
+            except pika.exceptions.AMQPConnectionError:
+                self._l.warning(f"Waiting for RabbitMQ network routing... ({retries} attempts left)")
+                time.sleep(2)
+                retries -= 1
+        else:
+            # The 'else' attached to a while loop runs only if the loop didn't 'break'
+            self._l.error("Could not connect to RabbitMQ after multiple retries. Crashing.")
+            raise Exception("Failed to connect to RabbitMQ broker.")
 
     def send_message(self, routing_key, message, properties=None):
         self.channel.basic_publish(exchange=self.exchange_name,

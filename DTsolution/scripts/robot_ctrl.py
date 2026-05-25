@@ -48,18 +48,18 @@ def main():
         wear_injected = False
         stuck_injected = False
         while True:
-            time.sleep(30)
+            time.sleep(15) # Time between each move
             enqueue_program(scale=4*np.pi)
             elapsed = time.time() - start_time
-            if not wear_injected and elapsed >= 120:
-                inject_wear()
-                wear_injected = True
-                print("Injected wear")
-            if False and not stuck_injected and elapsed >= 400:
-                inject_stuck_joints()
-                stuck_injected = True
-                print("Injected stuck joints")
-            #print("Enqueued new program")
+            # if not wear_injected and elapsed >= 120:
+            #     inject_wear()
+            #     wear_injected = True
+            #     print("Injected wear")
+            # if False and not stuck_injected and elapsed >= 400:
+            #     inject_stuck_joints()
+            #     stuck_injected = True
+            #     print("Injected stuck joints")
+            print("Enqueued new program")
 
 if __name__ == "__main__":
     main()
