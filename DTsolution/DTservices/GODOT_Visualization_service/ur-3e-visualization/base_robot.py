@@ -60,15 +60,15 @@ class RobotScriptBase(Node3D):
     @private
     def apply_rotation(self, angle, link_num: int):
         joint_axis_lut = {1: "y", 2: "z", 3: "z", 4: "z", 5: "y", 6: "z"}
-        angle_offsets = {1: 0, 2: -math.pi/2, 3: 0, 4: -math.pi/2, 5: 0, 6: 0} # Upright position
-        rotation_signs = {1: 1, 2: -1, 3: 1, 4: -1, 5: 1, 6: 1} # Upright position
+        angle_offsets = {1: 0, 2: math.pi/2, 3: 0, 4: math.pi/2, 5: 0, 6: 0} # Upright position
+        rotation_signs = {1: 1, 2: -1, 3: -1, 4: -1, 5: 1, 6: -1} # Upright position
         children_base_string = "Base/Link1/Link2/Link3/Link4/Link5/Link6"
 
         # Calculate path: Base/Link1 is index 1, etc.
         child = self.get_node(children_base_string[:link_num * 6 + 5])
         
         if child:
-            effective_angle = rotation_signs[link_num] * (angle - angle_offsets[link_num])
+            effective_angle = rotation_signs[link_num] *(angle + angle_offsets[link_num])
             rotation_rad = Vector3()
             rotation_rad.x = 0
             if joint_axis_lut[link_num] == "y":

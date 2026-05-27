@@ -13,9 +13,9 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
       DOCKER_INFLUXDB_INIT_ORG: ur3e
       DOCKER_INFLUXDB_INIT_BUCKET: ur3e
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "qFEMOoL0ghl90ghWnzq61MNfoI20_cZrAffwooMdgUl8tk-eIUVsI4Vv7vCsLR9eCeLPPWGYNemWblSlzv3WSw=="
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: SECRET_AF
     volumes:
-      - db-data:/var/lib/influxdb:rw
+      - db-data:/var/lib/influxdb2:rw
     ports:
       - 8086:8086
 

@@ -36,9 +36,11 @@ def check_wear(pt_state: PhysicalTwinState, typed_client: TypedRabbitMQClient) -
     tcp_error_m = np.linalg.norm(tcp_theoretical - tcp_measured)
     tcp_error_mm = tcp_error_m * 1000  # Convert to mm for easier reading
 
-    var = ("e", pt_state.timestamp, tcp_error_mm)
     result = monitor.update("e", tcp_error_mm, pt_state.timestamp)
-    final_result = result.verdicts()[0][1][0] # Extract the usable verdict over the "Global" operator
+    final_result = result.verdicts()[0][1][1] # Extract the usable verdict over the "Global" operator
+    if tcp_error_mm > WEAR_THRESHOLD or final_result < 0:
+        print("Too large error: ", tcp_error_mm )
+        print(result.verdicts()[0])
     
     # Publish final verdict
     typed_client.publish(

@@ -63,7 +63,7 @@ export VENV_PATH=$(pwd)/venv/lib/python3.11/site-packages
 PYTHONPATH=$(pwd):$VENV_PATH godot --path DTsolution/DTservices/GODOT_Visualization_service/ur-3e-visualization/ World.tscn
 
 ### Powershell
-$VENV_PATH = "$(Get-Location)\venv\Lib\site-packages"
+$VENV_PATH = "$(Get-Location)\.venv\Lib\site-packages"
 
 $env:PYTHONPATH = "$(Get-Location);$VENV_PATH"
 godot --path DTsolution\DTservices\GODOT_Visualization_service\ur-3e-visualization\ World.tscn
