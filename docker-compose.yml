@@ -176,6 +176,7 @@ services:
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/inv_kinematics/inv_kinematics.py:/app/inv_kinematics.py
+      - ./DTsolution/models:/app/models
     command: python -u inv_kinematics.py
     depends_on:
       - stuck_joint
@@ -187,9 +188,10 @@ services:
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/surface_detection/surface_detection.py:/app/surface_detection.py
+      - ./DTsolution/models:/app/models
     command: python -u surface_detection.py
     depends_on:
-      - mockup
+      - inv_kinematics
 
   calibration:
     container_name: calibration

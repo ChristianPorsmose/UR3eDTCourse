@@ -36,11 +36,10 @@ def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
     with model_lock:
         match (state, msg):
             case (_, Calibrate()):
-                model.fmi2SetCommandedJointAngles(msg.joint_positions)
-                model.fmi2StartMovement()
                 state = State.IDLE
                 print("Calibration applied.", flush=True)
-
+                model.current_joint_angles = msg.joint_positions
+                
             case (State.PLAY_BUFFERED, LoadProgram()):
                 model.fmi2SetCommandedJointAngles(msg.joint_positions)
                 model.fmi2StartMovement()

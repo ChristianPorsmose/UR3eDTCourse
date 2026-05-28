@@ -15,7 +15,6 @@ class RobotScriptBase(Node3D):
     Base class for robot synchronization via RabbitMQ.
     Children must define self.topic and self.consumer_tag in _ready().
     """
-    
     def setup_robot(self, topic: str, consumer_tag: str):
         self.topic = topic
         self.consumer_tag = consumer_tag

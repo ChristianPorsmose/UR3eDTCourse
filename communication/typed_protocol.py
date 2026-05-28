@@ -118,6 +118,17 @@ class LoadTCPProgram(TimeStamped):
 
 
 @dataclass
+class JointProgram(TimeStamped):
+    joint_positions: list[float]
+    max_velocity: float
+    acceleration: float
+
+    @classmethod
+    def routing_key(cls) -> str:
+        return "load_program.joint"
+
+
+@dataclass
 class WearStatus(TimeStamped):
     wear_detected: bool
     affected_joints: list[int]
