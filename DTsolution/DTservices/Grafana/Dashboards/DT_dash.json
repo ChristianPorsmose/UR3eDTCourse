@@ -124,6 +124,21 @@
                   "color": "dark-green",
                   "index": 0,
                   "text": "Program loaded"
+                },
+                "play": {
+                  "color": "dark-green",
+                  "index": 1,
+                  "text": "Playing"
+                },
+                "pause": {
+                  "color": "dark-yellow",
+                  "index": 2,
+                  "text": "Paused"
+                },
+                "stop": {
+                  "color": "dark-red",
+                  "index": 3,
+                  "text": "Stopped"
                 }
               },
               "type": "value"
