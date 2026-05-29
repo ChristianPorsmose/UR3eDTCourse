@@ -24,7 +24,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
       "fieldConfig": {
         "defaults": {
@@ -89,7 +89,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "cfkfg7vvtvaioe"
+            "uid": "unique-datasource-id"
           },
           "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"robotarm.pt.state\")\n  |> filter(fn: (r) => r[\"_field\"] == \"robot_mode\")\n  |> last()\n  |> map(fn: (r) => ({ _value: string(v: r._value) }))",
           "refId": "A"
@@ -113,7 +113,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
       "fieldConfig": {
         "defaults": {
@@ -193,7 +193,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
       "fieldConfig": {
         "defaults": {
@@ -262,7 +262,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "cfkfg7vvtvaioe"
+            "uid": "unique-datasource-id"
           },
           "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"stuck_joint.status\")\n  |> filter(fn: (r) => r[\"_field\"] == \"stuck_joints_5\" or r[\"_field\"] == \"stuck_joints_4\" or r[\"_field\"] == \"stuck_joints_3\" or r[\"_field\"] == \"stuck_joints_2\" or r[\"_field\"] == \"stuck_joints_1\" or r[\"_field\"] == \"stuck_joints_0\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
           "refId": "A"
@@ -286,46 +286,31 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
+      "description": "A flag illustrator for whether wear is detected or not.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
+          "mappings": [
+            {
+              "options": {
+                "false": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "No Wear"
+                },
+                "true": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Wear Detected!"
+                }
+              },
+              "type": "value"
             }
-          },
-          "mappings": [],
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -343,41 +328,46 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 8,
         "x": 0,
         "y": 4
       },
-      "id": 1,
+      "id": 7,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "10.4.3",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "cfkfg7vvtvaioe"
+            "uid": "unique-datasource-id"
           },
-          "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_field\"] == \"joint_max_acceleration_0\" or r[\"_field\"] == \"joint_max_acceleration_5\" or r[\"_field\"] == \"joint_max_acceleration_4\" or r[\"_field\"] == \"joint_max_acceleration_3\" or r[\"_field\"] == \"joint_max_acceleration_2\" or r[\"_field\"] == \"joint_max_acceleration_1\" or r[\"_field\"] == \"joint_max_speed_0\" or r[\"_field\"] == \"joint_max_speed_1\" or r[\"_field\"] == \"joint_max_speed_2\" or r[\"_field\"] == \"joint_max_speed_3\" or r[\"_field\"] == \"joint_max_speed_4\" or r[\"_field\"] == \"joint_max_speed_5\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"ur3e\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"wear.status\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"wear_detected\")\r\n  |> last()\r\n  |> map(fn: (r) => ({ _value: string(v: r._value) }))",
           "refId": "A"
         }
       ],
-      "title": "Max Acceleration and Speed",
-      "type": "timeseries"
+      "title": "Wear Status",
+      "type": "stat"
     },
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
       "fieldConfig": {
         "defaults": {
@@ -481,7 +471,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "cfkfg7vvtvaioe"
+            "uid": "unique-datasource-id"
           },
           "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"robotarm.pt.state\" or r[\"_measurement\"] == \"rt_model.dt.state\")\n  |> filter(fn: (r) => r[\"_field\"] == \"q_actual_2\" or r[\"_field\"] == \"q_actual_0\" or r[\"_field\"] == \"q_actual_1\" or r[\"_field\"] == \"q_actual_3\" or r[\"_field\"] == \"q_actual_4\" or r[\"_field\"] == \"q_actual_5\" or r[\"_field\"] == \"q_target_0\" or r[\"_field\"] == \"q_target_1\" or r[\"_field\"] == \"q_target_2\" or r[\"_field\"] == \"q_target_3\" or r[\"_field\"] == \"q_target_4\" or r[\"_field\"] == \"q_target_5\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
           "refId": "A"
@@ -493,7 +483,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "cfkfg7vvtvaioe"
+        "uid": "unique-datasource-id"
       },
       "fieldConfig": {
         "defaults": {
@@ -662,22 +652,186 @@
         }
       ],
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "unique-datasource-id"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "unique-datasource-id"
+          },
+          "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_field\"] == \"joint_max_acceleration_0\" or r[\"_field\"] == \"joint_max_acceleration_5\" or r[\"_field\"] == \"joint_max_acceleration_4\" or r[\"_field\"] == \"joint_max_acceleration_3\" or r[\"_field\"] == \"joint_max_acceleration_2\" or r[\"_field\"] == \"joint_max_acceleration_1\" or r[\"_field\"] == \"joint_max_speed_0\" or r[\"_field\"] == \"joint_max_speed_1\" or r[\"_field\"] == \"joint_max_speed_2\" or r[\"_field\"] == \"joint_max_speed_3\" or r[\"_field\"] == \"joint_max_speed_4\" or r[\"_field\"] == \"joint_max_speed_5\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Max Acceleration and Speed",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "unique-datasource-id"
+      },
+      "description": "Difference between PT expectation and measurements (Abnormal Movement Detection)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "radian"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 6,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "unique-datasource-id"
+          },
+          "query": "from(bucket: \"ur3e\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"deviation.status\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"joint_deviations_0\" or r[\"_field\"] == \"joint_deviations_1\" or r[\"_field\"] == \"joint_deviations_2\" or r[\"_field\"] == \"joint_deviations_3\" or r[\"_field\"] == \"joint_deviations_4\" or r[\"_field\"] == \"joint_deviations_5\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "title": "Joint Expectation Deviation",
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {}
+        }
+      ],
+      "type": "stat"
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "UR3e Robot Monitoring",
   "uid": "robot-monitor-v2",
-  "version": 10,
+  "version": 3,
   "weekStart": ""
 }
