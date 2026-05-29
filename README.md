@@ -81,7 +81,11 @@ residual-based anomaly detection
 
 ### TO RUN STUFF 
 
-cp .env.x86 .env && docker compose up --build -d 
+1. first time use
+cp .env.x86 .env 
+
+2. first build
+docker compose up --build -d 
 
 godot will be: 
 

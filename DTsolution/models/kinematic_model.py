@@ -123,7 +123,7 @@ class KinematicModel:
             # Apply directionality back to the velocity
             return dir_x * np.select(conditions, choices, default=0.0)
 
-        return x, xderiv
+        return x, xderiv, delta_t
 
 
     def fmi2Instantiate(self):
@@ -148,7 +148,7 @@ class KinematicModel:
         self.current_movement_start_time = self.time
 
         # Calculate the acc, cruise and deacc durations for the trajectory
-        self.angle_position_function, self.angle_velocity_function = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
+        self.angle_position_function, self.angle_velocity_function, self.movement_duration = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
         self.moving = True
 
     def fmi2DoStep(self, current_time: float, step_size: float): 
