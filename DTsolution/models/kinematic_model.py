@@ -14,6 +14,7 @@ class KinematicModel:
 
         # Inputs
         self.commanded_joint_angles = np.array([0.0] * 6)
+        self.stuck_joints = [False] * 6
 
         # Movement variables
         self.moving = False
@@ -151,12 +152,32 @@ class KinematicModel:
         self.angle_position_function, self.angle_velocity_function, self.movement_duration = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
         self.moving = True
 
+    def fmi2MakeJointsStuck(self, joints: list[0 | 1 | 2 | 3 | 4 | 5]):
+        for j in joints:
+            self.stuck_joints[j] = True
+
+    def fmi2UnstuckJoints(self, joints: list[0 | 1 | 2 | 3 | 4 | 5]):
+        for j in joints:
+            self.stuck_joints[j] = False
+
     def fmi2DoStep(self, current_time: float, step_size: float): 
         self.time = current_time + step_size
 
         t = self.time - self.current_movement_start_time
-        self.current_joint_angles = self.angle_position_function(t)
-        self.current_joint_velocities = self.angle_velocity_function(t)
+        
+        # Calculate theoretical trajectory for this time step
+        calculated_angles = self.angle_position_function(t)
+        calculated_velocities = self.angle_velocity_function(t)
+
+        # Convert boolean list to a numpy array mask
+        stuck_mask = np.array(self.stuck_joints)
+
+        # Apply the mask: 
+        # If stuck -> keep current_joint_angles. If not stuck -> use calculated_angles.
+        self.current_joint_angles = np.where(stuck_mask, self.current_joint_angles, calculated_angles)
+        
+        # If stuck -> velocity is 0.0. If not stuck -> use calculated_velocities.
+        self.current_joint_velocities = np.where(stuck_mask, 0.0, calculated_velocities)
 
     def fmi2GetJointPositions(self) -> list: 
         return self.current_joint_angles.copy().tolist()
