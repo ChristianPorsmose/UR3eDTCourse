@@ -138,7 +138,7 @@ services:
     depends_on:
       - mockup
   grafana:
-    container_name: grafana-visualizer
+    container_name: grafana
     image: grafana/grafana:10.4.3
     restart: unless-stopped
     ports:
@@ -148,9 +148,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=ur3eur3e
     volumes:
       - grafana-data:/var/lib/grafana:rw
-      - ./dt_solution/dt_services/Grafana/Dashboards:/var/lib/grafana/dashboards:rw
-      - ./dt_solution/dt_services/Grafana/Dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:rw
-      - ./dt_solution/dt_services/Grafana/Datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:rw
+      - ./dt_solution/dt_services/grafana/dashboards:/var/lib/grafana/dashboards:rw
+      - ./dt_solution/dt_services/grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:rw
+      - ./dt_solution/dt_services/grafana/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:rw
     depends_on:
       - influxdb
       - on_the_fly_modelling
