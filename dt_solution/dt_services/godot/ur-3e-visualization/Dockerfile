@@ -25,7 +25,7 @@ RUN mkdir -p addons && \
 # Install pure-Python deps into /app/lib — version-agnostic, works with any Python runtime
 RUN pip install --target /app/lib --no-binary :all: pika pyyaml
 
-COPY dt_solution/dt_services/GODOT_Visualization_service/ur-3e-visualization/ .
+COPY dt_solution/dt_services/godot/ur-3e-visualization/ .
 
 RUN PYTHONPATH=/app:/app/lib timeout 120 xvfb-run -a godot --headless --editor --quit; exit 0
 
