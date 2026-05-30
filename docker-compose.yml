@@ -99,7 +99,7 @@ services:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./dt_solution/dt_services/stuck_joint_detection/stuck_joint.py:/app/stuck_joint.py
+      - ./dt_solution/dt_services/stuck_joint/stuck_joint.py:/app/stuck_joint.py
     command: python -u stuck_joint.py
     depends_on:
       - mockup
@@ -179,14 +179,14 @@ services:
     depends_on:
       - stuck_joint
 
-  surface_detection:
-    container_name: surface_detection
+  pre_execution_surface_check:
+    container_name: pre_execution_surface_check
     build:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./dt_solution/dt_services/surface_detection/surface_detection.py:/app/surface_detection.py
-    command: python -u surface_detection.py
+      - ./dt_solution/dt_services/pre_execution_surface_check/pre_execution_surface_check.py:/app/pre_execution_surface_check.py
+    command: python -u pre_execution_surface_check.py
     depends_on:
       - inv_kinematics
 
