@@ -4,12 +4,12 @@ import numpy as np
 from pathlib import Path
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import FilteredState, LoadProgram, StuckJointStatus, InjectStuckJoint
+from communication.typed_protocol import StuckJointStatus, InjectStuckJoint
 from communication.typed_protocol_client import TypedRabbitMQClient
 from communication.typed_protocol import PhysicalTwinState 
 import queue
 
-consumer_queue : queue.Queue[FilteredState] = queue.Queue()
+consumer_queue : queue.Queue[PhysicalTwinState] = queue.Queue()
 publish_queue : queue.Queue[StuckJointStatus] = queue.Queue()
 
 def is_constant(values: np.ndarray, eps: float) -> np.ndarray:
@@ -38,12 +38,13 @@ def stuck_joint_loop():
 
         if np.any(stuck_mask):
             print("DEBUG : STUCK  JOINT INCOMMING")
-            publish_queue.put(
-                StuckJointStatus(
+            stuck_joint_status = StuckJointStatus(
                     stuck_mask.tolist(),
                     joint_positions = q_actuals[-1].tolist()
                 )
-        )
+            print(f"DEBUG: STUCK JOINT STATUS: {stuck_joint_status}")
+            publish_queue.put(stuck_joint_status)
+        
 def main():
     config = load_config(Path("connect.yml"))
 

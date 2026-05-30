@@ -110,7 +110,6 @@ services:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./DTsolution/models:/app/DTsolution/models
       - ./DTsolution/DTservices/RT_robot_prediction/prediction.py:/app/prediction.py
     command: python -u prediction.py
     depends_on:
@@ -176,7 +175,6 @@ services:
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/inv_kinematics/inv_kinematics.py:/app/inv_kinematics.py
-      - ./DTsolution/models:/app/models
     command: python -u inv_kinematics.py
     depends_on:
       - stuck_joint
@@ -188,7 +186,6 @@ services:
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
       - ./DTsolution/DTservices/surface_detection/surface_detection.py:/app/surface_detection.py
-      - ./DTsolution/models:/app/models
     command: python -u surface_detection.py
     depends_on:
       - inv_kinematics

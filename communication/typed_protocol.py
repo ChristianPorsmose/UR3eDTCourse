@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Protocol, TypeVar, runtime_checkable, Union
+from dataclasses import dataclass, field
+from typing import Protocol, TypeVar, runtime_checkable
 
 T = TypeVar("T", bound="MsgProtocol")
 

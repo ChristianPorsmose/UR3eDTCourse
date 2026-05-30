@@ -151,12 +151,13 @@ class KinematicModel:
         self.angle_position_function, self.angle_velocity_function, self.movement_duration = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
         self.moving = True
 
-    def fmi2DoStep(self, current_time: float, step_size: float): 
+    def fmi2DoStep(self, current_time: float, step_size: float):
         self.time = current_time + step_size
 
-        t = self.time - self.current_movement_start_time
-        self.current_joint_angles = self.angle_position_function(t)
-        self.current_joint_velocities = self.angle_velocity_function(t)
+        if self.moving:
+            t = self.time - self.current_movement_start_time
+            self.current_joint_angles = self.angle_position_function(t)
+            self.current_joint_velocities = self.angle_velocity_function(t)
 
     def fmi2GetJointPositions(self) -> list: 
         return self.current_joint_angles.copy().tolist()

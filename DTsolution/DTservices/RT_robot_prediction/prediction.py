@@ -4,6 +4,8 @@ import time
 import threading
 from queue import Queue
 
+import numpy as np
+
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
 from communication.typed_protocol import (
@@ -38,7 +40,8 @@ def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
             case (_, Calibrate()):
                 state = State.IDLE
                 print("Calibration applied.", flush=True)
-                model.current_joint_angles = msg.joint_positions
+                model.current_joint_angles = np.array(msg.joint_positions)
+                model.current_joint_velocities = np.zeros(len(msg.joint_positions))
                 
             case (State.PLAY_BUFFERED, LoadProgram()):
                 model.fmi2SetCommandedJointAngles(msg.joint_positions)

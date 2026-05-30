@@ -31,9 +31,7 @@ publish_queue: queue.Queue = queue.Queue()
 
 
 def _is_idle(state: PhysicalTwinState | KinematicModelState) -> bool:
-    if state.robot_mode == "IDLE":
-        return True
-    return all(abs(v) < VELOCITY_THRESHOLD for v in state.qd_actual)
+    return state.robot_mode.upper() == "IDLE"
 
 
 def calibration_loop() -> None:
@@ -47,6 +45,15 @@ def calibration_loop() -> None:
 
         pt = latest_pt[-1]
         km = latest_km[-1]
+
+    # print robot status: 
+        print(f"[DEBUG] phys {pt.robot_mode} kin {km.robot_mode} ", flush=True)
+
+        print(
+            f"[Calibration Loop] pt q_actual={pt.q_actual} km q_actual={km.q_actual}",
+            flush=True,
+        )
+
         now = time.time()
 
         if not (_is_idle(pt) and _is_idle(km)):

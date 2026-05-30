@@ -17,7 +17,8 @@ N_JOINTS = 6
 WARMUP_SAMPLES = 100  # samples before first model fit
 REFIT_INTERVAL = 50   # retrain every N new samples
 HISTORY_SIZE = 500    # rolling window per joint
-CONTAMINATION = 0.05  # expected fraction of anomalies in training data
+CONTAMINATION = 0.01  # expected fraction of anomalies in training data
+MIN_DEVIATION_RAD = 0.01  # ignore deviations smaller than ~0.6 degrees
 
 joint_history: list[deque[float]] = [deque(maxlen=HISTORY_SIZE) for _ in range(N_JOINTS)]
 models: list[IsolationForest | None] = [None] * N_JOINTS
@@ -43,6 +44,9 @@ def deviation_loop() -> None:
 
         deviation = (np.array(latest_mock.q_actual) - np.array(kin_value)).tolist()
 
+        if np.max(np.abs(deviation)) < MIN_DEVIATION_RAD:
+            continue
+
         anomaly_detected = False
         for i in range(N_JOINTS):
             joint_history[i].append(deviation[i])
@@ -59,14 +63,15 @@ def deviation_loop() -> None:
                 anomaly_detected = True
 
         if anomaly_detected:
-            publish_queue.put(Deviation(joint_deviations=deviation))
+            deviation_msg = Deviation(joint_deviations=deviation)
+            print(f"DEBUG: Anomaly detected with deviation {deviation_msg}")
+            publish_queue.put(deviation_msg)
 
 
 def main():
     config = load_config(Path("connect.yml"))
     print("STARTING ABNORMAL MOVEMENT")
     with TypedRabbitMQClient(Rabbitmq(**config)) as typed_client:
-
         typed_client.subscribe(
             PhysicalTwinState, lambda x: latest_mock_queue.put(x), "abnormal_queue_1"
         )

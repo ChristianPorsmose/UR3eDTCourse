@@ -6,7 +6,7 @@ import numpy as np
 
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import JointProgram, LoadProgram, Play, SurfaceViolation
+from communication.typed_protocol import Calibrate, JointProgram, LoadProgram, Play, SurfaceViolation
 from communication.typed_protocol_client import TypedRabbitMQClient
 from models.ur3e import build_ur3e
 from models.kinematic_model import KinematicModel
@@ -37,6 +37,8 @@ def simulate_program(program: JointProgram, client: TypedRabbitMQClient) -> None
     violating: set[int] = set()
     min_z: list[float] = []
     t = 0.0
+
+    print(f"Simulating... t={t:.2f}/{sim_duration:.2f}s", end="\r", flush=True)
 
     while t <= sim_duration:
         km.fmi2DoStep(t, SIM_DT_S)
@@ -81,6 +83,15 @@ def main():
     with TypedRabbitMQClient(Rabbitmq(**config)) as client:
         print("STARTING SURFACE DETECTION SERVICE (what-if mode)")
 
+        def on_calibrate(msg: Calibrate):
+            global current_q
+            current_q = np.array(msg.joint_positions)
+
+        client.subscribe(
+            Calibrate,
+            on_calibrate,
+            "surface_det_calibrate",
+        )
         client.subscribe(
             JointProgram,
             lambda program: simulate_program(program, client),

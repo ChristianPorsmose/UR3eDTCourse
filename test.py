@@ -1,28 +1,10 @@
 
+from cmath import pi
 from dataclasses import asdict
 
-from communication import protocol
-from communication.typed_protocol import InjectStuckJoint
+from models.breakable_robot import BreakableRobot
 
+robot = BreakableRobot()
 
-def inject_stuck_joints():
-    return {
-    protocol.CtrlMsgKeys.TYPE: protocol.CtrlMsgFields.INJECT_FAULT,
-    protocol.CtrlMsgKeys.FAULT_TYPE: protocol.FaultTypes.STUCK_JOINT,
-    protocol.CtrlMsgKeys.JOINTS: [0, 1, 2],
-    }
+print(robot.ur3e.fkine([0, -pi, 0, -pi, 0, 0]).t)
 
-
-def inject_typed():
-    return asdict(
-        InjectStuckJoint(
-            joints=[0, 1, 2]
-        )
-    )
-
-print(inject_stuck_joints())
-print(inject_typed())
-
-
-
-    
