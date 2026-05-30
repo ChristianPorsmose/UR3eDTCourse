@@ -16,7 +16,7 @@ from communication.typed_protocol import (
     CtrlMsg
 )
 from communication.typed_protocol_client import TypedRabbitMQClient
-from DTsolution.models.kinematic_model import KinematicModel
+from dt_solution.models.kinematic_model import KinematicModel
 
 
 class State(Enum):

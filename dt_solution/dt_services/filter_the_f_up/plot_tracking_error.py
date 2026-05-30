@@ -116,6 +116,30 @@ def main():
     plt.tight_layout()
     plt.savefig("tracking_error.png", dpi=150, bbox_inches="tight")
     print("\nSaved tracking_error.png")
+
+    # --- Std deviation comparison bar chart ---
+    raw_std      = np.abs(raw_err).std(axis=0)
+    filtered_std = np.abs(filtered_err).std(axis=0)
+
+    x     = np.arange(NUM_JOINTS)
+    width = 0.35
+    _, ax = plt.subplots(figsize=(9, 5))
+    bars_raw  = ax.bar(x - width/2, raw_std,      width, label="Raw",      color="tab:orange", alpha=0.85)
+    bars_filt = ax.bar(x + width/2, filtered_std, width, label="Filtered", color="tab:blue",   alpha=0.85)
+
+    ax.set_yscale("log")
+    ax.set_xlabel("Joint")
+    ax.set_ylabel("Std deviation of |error| (rad)  [log scale]")
+    ax.set_title("Tracking error std deviation — raw vs filtered")
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"J{j}" for j in range(NUM_JOINTS)])
+    ax.legend()
+    ax.bar_label(bars_raw,  fmt="%.2e", fontsize=7, padding=2)
+    ax.bar_label(bars_filt, fmt="%.2e", fontsize=7, padding=2)
+
+    plt.tight_layout()
+    plt.savefig("tracking_error_std.png", dpi=150, bbox_inches="tight")
+    print("Saved tracking_error_std.png")
     plt.show()
 
 

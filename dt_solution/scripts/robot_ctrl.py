@@ -53,11 +53,11 @@ def main():
 
             enqueue_program()
 
-            time.sleep(30)
+            #time.sleep(30)
 
-            inject_stuck_joints()
+            #inject_stuck_joints()
 
-            time.sleep(10)
+            #time.sleep(10)
             
             # control_queue.put(
             #     LoadTCPProgram(

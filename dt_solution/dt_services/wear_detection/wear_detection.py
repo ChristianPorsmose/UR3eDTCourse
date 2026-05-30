@@ -5,7 +5,7 @@ from communication.rabbitmq import Rabbitmq
 from communication.typed_protocol import PhysicalTwinState, WearStatus
 from communication.typed_protocol_client import TypedRabbitMQClient
 import mstlo_python as mstlo
-from DTsolution.models.DH_model import get_DH_robot
+from dt_solution.models.DH_model import get_DH_robot
 
 # Set threshold for when wear should be detected
 WEAR_THRESHOLD = 0.1 # Larger than some of the larger swings when no wear is present 

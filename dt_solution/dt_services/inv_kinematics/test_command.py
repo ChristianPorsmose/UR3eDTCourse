@@ -1,4 +1,4 @@
-from DTsolution.utils.utils import load_config
+from dt_solution.utils.utils import load_config
 from pathlib import Path
 from communication.typed_protocol_client import TypedRabbitMQClient
 from communication.rabbitmq import Rabbitmq
