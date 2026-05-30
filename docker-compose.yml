@@ -132,8 +132,8 @@ services:
       <<: *base-build
     volumes:
       - ./communication/connect.yml:/app/connect.yml:rw
-      - ./dt_solution/dt_services/filter_the_f_up/ParticleFilter.py:/app/ParticleFilter.py
-      - ./dt_solution/dt_services/filter_the_f_up/filter_loop.py:/app/filter_loop.py
+      - ./dt_solution/dt_services/particle_filter/particle_filter.py:/app/particle_filter.py
+      - ./dt_solution/dt_services/particle_filter/filter_loop.py:/app/filter_loop.py
     command: python -u filter_loop.py
     depends_on:
       - mockup

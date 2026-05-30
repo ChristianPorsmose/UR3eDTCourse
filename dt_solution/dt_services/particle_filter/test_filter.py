@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from ParticleFilter import ParticleFilter
+from dt_solution.dt_services.particle_filter.particle_filter import ParticleFilter
 
 def make_filter(num_particles=500, dim=3) -> ParticleFilter:
     return ParticleFilter(num_particles=num_particles, dim=dim)

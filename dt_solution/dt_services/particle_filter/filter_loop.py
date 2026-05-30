@@ -8,7 +8,7 @@ from communication.typed_protocol_client import TypedRabbitMQClient
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
 import queue
-from ParticleFilter import ParticleFilter
+from particle_filter import ParticleFilter
 
 
 consumer_queue: queue.Queue[PhysicalTwinState] = queue.Queue()
