@@ -6,6 +6,7 @@ authors = ["Andreas Kaag Thomsen <akt@ece.au.dk>"]
 readme = "README.md"
 packages = [
     { include = "communication" },
+    { include = "models", from = "dt_solution" }
 ]
 
 [tool.poetry.dependencies]

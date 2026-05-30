@@ -23,19 +23,23 @@ class Rabbitmq:
         
         credentials = pika.PlainCredentials(username, password)
         if ssl is None:
-            self.parameters = pika.ConnectionParameters(ip,
-                                                        port,
-                                                        vhost,
-                                                        credentials)
+            self.parameters = pika.ConnectionParameters(
+                ip, port, vhost, credentials,
+                heartbeat=60,
+                blocked_connection_timeout=300,
+                socket_timeout=10,
+            )
         else:
             ssl_context = ssl_package.SSLContext(getattr(ssl_package, ssl["protocol"]))
             ssl_context.set_ciphers(ssl["ciphers"])
 
-            self.parameters = pika.ConnectionParameters(ip,
-                                                        port,
-                                                        vhost,
-                                                        credentials,
-                                                        ssl_options=pika.SSLOptions(context=ssl_context))
+            self.parameters = pika.ConnectionParameters(
+                ip, port, vhost, credentials,
+                heartbeat=60,
+                blocked_connection_timeout=300,
+                socket_timeout=10,
+                ssl_options=pika.SSLOptions(context=ssl_context),
+            )
         self.connection = None
         self.channel = None
         self.queue_name = []
@@ -61,7 +65,7 @@ class Rabbitmq:
         while retries > 0:
             try:
                 self.connection = pika.BlockingConnection(self.parameters)
-                self._l.debug("Connected.")
+                print("Connected to RabbitMQ server.")
                 
                 # Set up channel and exchange only after a successful connection
                 self.channel = self.connection.channel()

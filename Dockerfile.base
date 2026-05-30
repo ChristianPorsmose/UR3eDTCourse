@@ -20,8 +20,8 @@ RUN poetry install --no-root --no-interaction --no-ansi
 FROM dependency-builder AS base
 
 COPY communication/ communication/
-COPY DTsolution/utils utils
-COPY DTsolution/models models
+COPY dt_solution/utils utils
+COPY dt_solution/models dt_solution/models
 
 RUN poetry install --no-interaction --no-ansi
 
