@@ -19,7 +19,8 @@ from communication.typed_protocol import (
     FilteredState,
     WearStatus,
     Deviation,
-    MsgProtocol
+    MsgProtocol,
+    SurfaceViolation
 )
 from communication.typed_protocol_client import TypedRabbitMQClient
 
@@ -109,6 +110,7 @@ def main():
             FilteredState: write_dataclass,
             WearStatus: write_dataclass,
             Deviation: write_dataclass,
+            SurfaceViolation: write_dataclass
         }
 
         for msg_type, handler in subscriptions.items():
