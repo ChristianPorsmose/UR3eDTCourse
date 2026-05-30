@@ -14,6 +14,12 @@ class BreakableRobot:
 
     def _init_ur3e(self) -> rtb.ERobot:
         return build_ur3e(self.stuck_joints, self.joint_angles)
+    
+    def _get_unstuck_joint_angles(self) -> list:
+        return [
+            angle for angle, is_stuck in zip(self.joint_angles, self.stuck_joints) 
+            if not is_stuck
+        ]
 
     def inv_kinematics(self, tcp_pos: np.ndarray, tcp_rot: np.ndarray,
                        ignore_all_rotations=False) -> np.ndarray:
@@ -32,7 +38,7 @@ class BreakableRobot:
         success = False
 
         for attempt in range(max_retries):
-            q0 = self.joint_angles if attempt == 0 else np.random.uniform(-np.pi, np.pi, self.ur3e.n)
+            q0 = self._get_unstuck_joint_angles() if attempt == 0 else np.random.uniform(-np.pi, np.pi, self.ur3e.n)
             sol = self.ur3e.ikine_GN(T, mask=mask, q0=q0)
             if sol.success:
                 success = True
