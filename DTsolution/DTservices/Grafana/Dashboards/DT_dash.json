@@ -117,101 +117,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "load_program": {
-                  "color": "dark-green",
-                  "index": 0,
-                  "text": "Program loaded"
-                },
-                "play": {
-                  "color": "dark-green",
-                  "index": 1,
-                  "text": "Playing"
-                },
-                "pause": {
-                  "color": "dark-yellow",
-                  "index": 2,
-                  "text": "Paused"
-                },
-                "stop": {
-                  "color": "dark-red",
-                  "index": 3,
-                  "text": "Stopped"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 0
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/.*/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "10.4.3",
-      "targets": [
-        {
-          "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"robotarm.ctrl\")\n  |> filter(fn: (r) => r[\"_field\"] == \"type\")\n  |> last()\n  |> map(fn: (r) => ({ _value: string(v: r._value) }))",
-          "refId": "A"
-        }
-      ],
-      "title": "Active Program",
-      "transformations": [
-        {
-          "id": "reduce",
-          "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "lastNotNull"
-            ]
-          }
-        }
-      ],
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "unique-datasource-id"
-      },
-      "fieldConfig": {
-        "defaults": {
           "color": {
             "mode": "thresholds"
           },
@@ -251,7 +156,7 @@
       "gridPos": {
         "h": 4,
         "w": 8,
-        "x": 16,
+        "x": 8,
         "y": 0
       },
       "id": 6,
@@ -297,203 +202,6 @@
         }
       ],
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "unique-datasource-id"
-      },
-      "description": "A flag illustrator for whether wear is detected or not.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "false": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "No Wear"
-                },
-                "true": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Wear Detected!"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 0,
-        "y": 4
-      },
-      "id": 7,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/.*/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "10.4.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "unique-datasource-id"
-          },
-          "query": "from(bucket: \"ur3e\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"wear.status\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"wear_detected\")\r\n  |> last()\r\n  |> map(fn: (r) => ({ _value: string(v: r._value) }))",
-          "refId": "A"
-        }
-      ],
-      "title": "Wear Status",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "unique-datasource-id"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "robotarm.pt.state q_actual_0 PhysicalTwinState"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 4
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "unique-datasource-id"
-          },
-          "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"robotarm.pt.state\" or r[\"_measurement\"] == \"rt_model.dt.state\")\n  |> filter(fn: (r) => r[\"_field\"] == \"q_actual_2\" or r[\"_field\"] == \"q_actual_0\" or r[\"_field\"] == \"q_actual_1\" or r[\"_field\"] == \"q_actual_3\" or r[\"_field\"] == \"q_actual_4\" or r[\"_field\"] == \"q_actual_5\" or r[\"_field\"] == \"q_target_0\" or r[\"_field\"] == \"q_target_1\" or r[\"_field\"] == \"q_target_2\" or r[\"_field\"] == \"q_target_3\" or r[\"_field\"] == \"q_target_4\" or r[\"_field\"] == \"q_target_5\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
-          "refId": "A"
-        }
-      ],
-      "title": "Q_actual & Q_target",
-      "type": "timeseries"
     },
     {
       "datasource": {
@@ -612,7 +320,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 4
+        "y": 0
       },
       "id": 4,
       "options": {
@@ -666,6 +374,153 @@
           }
         }
       ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "unique-datasource-id"
+      },
+      "description": "A flag illustrator for whether wear is detected or not.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "false": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "No Wear"
+                },
+                "true": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Wear Detected!"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 4
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "unique-datasource-id"
+          },
+          "query": "from(bucket: \"ur3e\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"wear.status\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"wear_detected\")\r\n  |> last()\r\n  |> map(fn: (r) => ({ _value: string(v: r._value) }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Wear Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "unique-datasource-id"
+      },
+      "description": "A list over timestamps when TCP programs were cancelled (What-If simulation)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 4
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Time$/",
+          "limit": 6,
+          "values": true
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "unique-datasource-id"
+          },
+          "query": "from(bucket: \"ur3e\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"surface.violation\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"violation_detected\")\r\n  |> filter(fn: (r) => r[\"msg_type\"] == \"SurfaceViolation\")",
+          "refId": "A"
+        }
+      ],
+      "title": "TCPProgram Cancelled",
       "type": "stat"
     },
     {
@@ -728,7 +583,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 8,
         "x": 0,
         "y": 8
@@ -764,6 +619,122 @@
         "type": "influxdb",
         "uid": "unique-datasource-id"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "robotarm.pt.state q_actual_0 PhysicalTwinState"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "unique-datasource-id"
+          },
+          "query": "from(bucket: \"ur3e\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"robotarm.pt.state\" or r[\"_measurement\"] == \"rt_model.dt.state\")\n  |> filter(fn: (r) => r[\"_field\"] == \"q_actual_2\" or r[\"_field\"] == \"q_actual_0\" or r[\"_field\"] == \"q_actual_1\" or r[\"_field\"] == \"q_actual_3\" or r[\"_field\"] == \"q_actual_4\" or r[\"_field\"] == \"q_actual_5\" or r[\"_field\"] == \"q_target_0\" or r[\"_field\"] == \"q_target_1\" or r[\"_field\"] == \"q_target_2\" or r[\"_field\"] == \"q_target_3\" or r[\"_field\"] == \"q_target_4\" or r[\"_field\"] == \"q_target_5\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Q_actual & Q_target",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "unique-datasource-id"
+      },
       "description": "Difference between PT expectation and measurements (Abnormal Movement Detection)",
       "fieldConfig": {
         "defaults": {
@@ -792,7 +763,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 12
+        "y": 8
       },
       "id": 8,
       "options": {
@@ -847,6 +818,6 @@
   "timezone": "",
   "title": "UR3e Robot Monitoring",
   "uid": "robot-monitor-v2",
-  "version": 3,
+  "version": 5,
   "weekStart": ""
 }
