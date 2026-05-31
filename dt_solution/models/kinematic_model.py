@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Literal
 
 class KinematicModel:
     def __init__(self, max_velocity=np.deg2rad(60.0), max_acceleration=np.deg2rad(80.0)):
@@ -15,6 +16,7 @@ class KinematicModel:
         # Inputs
         self.commanded_joint_angles = np.array([0.0] * 6)
         self.stuck_joints = [False] * 6
+        self.stuck_angles = np.array([0.0] * 6)
 
         # Movement variables
         self.moving = False
@@ -152,11 +154,19 @@ class KinematicModel:
         self.angle_position_function, self.angle_velocity_function, self.movement_duration = self._determine_angle_position_function(self.start_joint_angles, self.start_joint_velocities, self.commanded_joint_angles)
         self.moving = True
 
-    def fmi2MakeJointsStuck(self, joints: list[0 | 1 | 2 | 3 | 4 | 5]):
-        for j in joints:
-            self.stuck_joints[j] = True
+    def fmi2MakeJointsStuck(self, joints: list[bool], angles: list[float] | None = None):
+        self.stuck_joints = joints
+        stuck_mask = np.array(self.stuck_joints, dtype=bool)
+        
+        if angles is not None:
+            # Lock the stuck joints at the explicitly provided angles
+            provided_angles = np.array(angles, dtype=float)
+            self.stuck_angles = np.where(stuck_mask, provided_angles, self.stuck_angles)
+        else:
+            # If no angles are provided, lock them at their current physical position
+            self.stuck_angles = np.where(stuck_mask, self.current_joint_angles, self.stuck_angles)
 
-    def fmi2UnstuckJoints(self, joints: list[0 | 1 | 2 | 3 | 4 | 5]):
+    def fmi2UnstuckJoints(self, joints: list[Literal[0, 1, 2, 3, 4, 5]]):
         for j in joints:
             self.stuck_joints[j] = False
 

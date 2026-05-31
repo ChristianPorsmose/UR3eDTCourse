@@ -17,17 +17,18 @@ RUN wget https://github.com/godotengine/godot/releases/download/4.6.2-stable/God
 
 WORKDIR /app
 
-RUN mkdir -p addons && \
-    wget https://github.com/niklas2902/py4godot/releases/download/4.6-alpha17/py4godot.zip -O addon.zip && \
-    unzip addon.zip -d addons/ && \
-    rm addon.zip
+COPY dt_solution/dt_services/godot/ur-3e-visualization/ .
+
+RUN wget https://github.com/niklas2902/py4godot/releases/download/4.6-alpha17/py4godot.zip -O addon.zip && \
+    unzip addon.zip -d temp_extract && \
+    mkdir -p addons && \
+    mv temp_extract/install_dir/addons/py4godot addons/ && \
+    rm -rf temp_extract addon.zip
+
+RUN PYTHONPATH=/app:/app/lib timeout 120 xvfb-run -a godot --headless --editor --quit; exit 0
 
 # Install pure-Python deps into /app/lib — version-agnostic, works with any Python runtime
 RUN pip install --target /app/lib --no-binary :all: pika pyyaml
-
-COPY dt_solution/dt_services/godot/ur-3e-visualization/ .
-
-RUN PYTHONPATH=/app:/app/lib timeout 120 xvfb-run -a godot --headless --editor --quit; exit 0
 
 EXPOSE 6080
 

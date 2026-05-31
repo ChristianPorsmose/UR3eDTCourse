@@ -13,7 +13,8 @@ from communication.typed_protocol import (
     Play,
     Calibrate,
     KinematicModelState,
-    CtrlMsg
+    CtrlMsg,
+    StuckJointStatus
 )
 from communication.typed_protocol_client import TypedRabbitMQClient
 from dt_solution.models.kinematic_model import KinematicModel
@@ -28,11 +29,11 @@ class State(Enum):
 model_lock = threading.Lock()
 state = State.IDLE
 
-ctrl_queue: Queue[CtrlMsg | Calibrate] = Queue()
+ctrl_queue: Queue[CtrlMsg | Calibrate | StuckJointStatus] = Queue()
 publish_queue: Queue[KinematicModelState] = Queue()
 
 
-def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
+def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate | StuckJointStatus):
     global state
 
     with model_lock:
@@ -61,6 +62,9 @@ def inject_ctrl_msg_to_model(model: KinematicModel, msg: CtrlMsg | Calibrate):
             case (_, Play()):
                 state = State.PLAY_BUFFERED
                 print("Play arrived early! Buffering until LoadProgram arrives.", flush=True)
+
+            case (_, StuckJointStatus()):
+                model.fmi2MakeJointsStuck(msg.stuck_joints, msg.joint_positions)
 
 
 def run_simulation(model: KinematicModel, dt: float = 0.05):
@@ -107,6 +111,7 @@ def main():
         typed_client.subscribe(LoadProgram, ctrl_queue.put, queue_name="model_load_program")
         typed_client.subscribe(Play, ctrl_queue.put, queue_name="model_play")
         typed_client.subscribe(Calibrate, ctrl_queue.put, queue_name="model_calibrate")
+        typed_client.subscribe(StuckJointStatus, ctrl_queue.put, queue_name="model_stuck_joint_update")
 
         threading.Thread(
             target=lambda: typed_publisher_loop(typed_client, publish_queue),
