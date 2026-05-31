@@ -115,16 +115,16 @@ services:
     depends_on:
       - mockup
 
-  robot_ctrl:
-    container_name: robot_ctrl
-    build:
-      <<: *base-build
-    volumes:
-      - ./communication/connect.yml:/app/connect.yml:rw
-      - ./dt_solution/scripts/robot_ctrl.py:/app/robot_ctrl.py
-    command: python -u robot_ctrl.py
-    depends_on:
-      - mockup
+  # robot_ctrl:
+  #   container_name: robot_ctrl
+  #   build:
+  #     <<: *base-build
+  #   volumes:
+  #     - ./communication/connect.yml:/app/connect.yml:rw
+  #     - ./dt_solution/scripts/robot_ctrl.py:/app/robot_ctrl.py
+  #   command: python -u robot_ctrl.py
+  #   depends_on:
+  #     - mockup
 
   particle_filter:
     container_name: particle_filter

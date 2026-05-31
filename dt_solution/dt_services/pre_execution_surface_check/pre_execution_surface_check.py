@@ -6,7 +6,7 @@ import numpy as np
 
 from utils.utils import load_config, typed_publisher_loop
 from communication.rabbitmq import Rabbitmq
-from communication.typed_protocol import Calibrate, JointProgram, LoadProgram, Play, SurfaceViolation
+from communication.typed_protocol import Calibrate, JointProgram, LoadProgram, Play, SurfaceViolation, StuckJointStatus
 from communication.typed_protocol_client import TypedRabbitMQClient
 from models.ur3e import build_ur3e
 from models.kinematic_model import KinematicModel
@@ -18,6 +18,8 @@ publish_queue: queue.Queue[SurfaceViolation] = queue.Queue()
 
 ur3e = build_ur3e()
 current_q = np.zeros(6)
+stuck_joints: list[bool] = [False] * 6
+stuck_angles: list[float] = [0.0] * 6
 
 def simulate_program(program: JointProgram, client: TypedRabbitMQClient) -> None:
     global current_q
@@ -30,6 +32,7 @@ def simulate_program(program: JointProgram, client: TypedRabbitMQClient) -> None
     km.fmi2Instantiate()
     km.current_joint_angles = current_q.copy()
     km.fmi2SetCommandedJointAngles(target_q.tolist())
+    km.fmi2MakeJointsStuck(stuck_joints, stuck_angles)
     km.fmi2StartMovement()
     sim_duration = km.movement_duration
     km.fmi2SetupExperiment(0.0, sim_duration)
@@ -87,6 +90,11 @@ def main():
             global current_q
             current_q = np.array(msg.joint_positions)
 
+        def on_stuck_joints(msg: StuckJointStatus):
+            global stuck_joints, stuck_angles
+            stuck_joints = msg.stuck_joints
+            stuck_angles = msg.joint_positions
+
         client.subscribe(
             Calibrate,
             on_calibrate,
@@ -96,6 +104,11 @@ def main():
             JointProgram,
             lambda program: simulate_program(program, client),
             "surface_det_program",
+        )
+        client.subscribe(
+            StuckJointStatus,
+            on_stuck_joints,
+            "stuck_joint_pre_execution_surface"
         )
 
         threading.Thread(
