@@ -38,9 +38,6 @@ def check_wear(pt_state: PhysicalTwinState, typed_client: TypedRabbitMQClient) -
 
     result = monitor.update("e", tcp_error_mm, pt_state.timestamp)
     final_result = result.verdicts()[0][1][1] # Extract the usable verdict over the "Global" operator
-    if tcp_error_mm > WEAR_THRESHOLD or final_result < 0:
-        print("Too large error: ", tcp_error_mm )
-        print(result.verdicts()[0])
     
     # Publish final verdict
     typed_client.publish(

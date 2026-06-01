@@ -19,6 +19,8 @@ def main():
 
         def on_load_tcp_program(body: LoadTCPProgram):
             q = robot.inv_kinematics(np.array(body.tcp_position), np.array(body.tcp_rotation))
+            if not q:
+                return # Don't publish if no solution found
             typed_client.publish(JointProgram(
                 joint_positions=q.tolist(),
                 max_velocity=body.max_velocity,

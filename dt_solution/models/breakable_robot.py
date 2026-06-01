@@ -48,6 +48,8 @@ class BreakableRobot:
             print(f"\nWarning: IK totally failed after {max_retries} attempts.")
             print(f"Reason: {sol.reason}")
             print("This pose is likely physically unreachable with the current stuck joints.")
+            return None
+
 
         full_q = np.zeros(len(self.stuck_joints))
         active_q_idx = 0
